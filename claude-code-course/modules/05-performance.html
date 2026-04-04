@@ -1,0 +1,490 @@
+<!-- ════════════════════════════════════════════════════════════
+     MODULE 5 — 启动与性能优化
+     ════════════════════════════════════════════════════════════ -->
+<section class="module" id="module-5" style="background:var(--color-bg-warm)">
+  <div class="module-content">
+
+    <!-- ── MODULE HEADER ─────────────────────────────────────── -->
+    <header class="module-header animate-in">
+      <span class="module-number">05</span>
+      <h2 class="module-title">启动与性能优化</h2>
+      <p class="module-subtitle">想象一下 F1 赛车的进站维修团队——每一毫秒都至关重要。维修人员同时更换四个轮胎，在检查刹车的同时加油，甚至在赛车到达之前就已经准备好了零件。Claude Code 在启动时做的正是同样的事情。</p>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 1 — 三大性能策略
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">三大性能策略</h3>
+
+      <p>Claude Code 的启动时间不到 200 毫秒。对于这样一个复杂的程序——包含 AI API、插件系统、<span class="term" data-definition="一种开放的授权标准。它允许你使用另一个服务的账号登录某个服务（比如用 Google 账号登录一个应用），而无需共享你的密码。Claude Code 使用 OAuth 来与 Anthropic 服务器进行安全认证。">OAuth</span>、<span class="term" data-definition="收集匿名使用数据的做法——比如功能的使用频率、操作耗时或错误发生的时间——以帮助开发者改进软件。Claude Code 向 Anthropic 发送遥测数据来定位性能瓶颈。">遥测</span>和完整的终端 UI——这个速度简直快得离谱。他们是怎么做到的呢？</p>
+
+      <p>在实际的软件工程中，性能优化并不是靠精妙的算法——而是靠<strong>不做不必要的工作</strong>。Claude Code 使用了三种策略：并行执行、懒加载（只在需要时才做），以及在<span class="term" data-definition="源代码被转换为最终优化文件（即 bundle）的阶段。在编译时做出的决策会被永久固化——不同于运行时的决策，运行时决策是程序实际运行时才发生的。">编译时</span>去除不需要的东西。</p>
+
+      <div class="pattern-cards stagger-children" style="margin-top:var(--space-8)">
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">⚡</div>
+          <div class="pattern-title">并行预加载</div>
+          <p class="pattern-desc">在程序一启动时就立刻发起耗时操作（钥匙串、MDM 设置、认证），然后在等待结果的同时继续做其他初始化工作。等到你真正需要结果时，它们早就准备好了。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">🦥</div>
+          <div class="pattern-title">懒加载</div>
+          <p class="pattern-desc">不要在启动时加载重量级模块，等到真正需要的时候再加载。OpenTelemetry（400KB）、<span class="term" data-definition="Google 远程过程调用（gRPC）——一种高性能的服务间网络通信框架。在 Claude Code 中用于组件之间的高效通信，但由于体积较大（700KB），所以只在需要时才加载。">gRPC</span>（700KB）以及语音模式等功能都是按需加载的，而不是在启动时就全部加载。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">✂️</div>
+          <div class="pattern-title">编译时特性开关</div>
+          <p class="pattern-desc"><span class="term" data-definition="一种工具，它将许多独立的源代码文件合并成一个（或几个）优化后的输出文件。打包器还可以移除未使用的代码、替换常量，以及应用其他优化来让最终文件更小、加载更快。">打包器</span>的<span class="term" data-definition="一种控制某个功能是否被包含或排除的配置开关。特性开关可以在运行时（程序运行时）或编译时（程序编译时）检查。编译时的特性开关更强大，因为打包器可以完全移除被禁用的代码。">特性开关</span>系统在编译时就移除了整条代码路径。如果某个功能被禁用，它的代码在最终的 bundle 中根本不存在。</p>
+        </div>
+      </div>
+
+      <div class="callout callout-accent animate-in" style="margin-top:var(--space-6)">
+        <span class="callout-icon">🏎️</span>
+        <div>
+          <span class="callout-title">进站维修的比喻</span>
+          <p>F1 赛车的维修团队不会一个一个地换轮胎——他们是四个轮胎同时换。他们不会等一个任务做完再开始下一个。Claude Code 运用的正是同样的思路：并行发起耗时任务、按需加载资源、让打包器剥离一切不需要的东西。最终结果？一个拥有数千项功能的程序，启动时间不到 200 毫秒。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 2 — 并行预加载——进站维修团队
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">并行预加载——进站维修团队</h3>
+
+      <p><code>main.tsx</code> 做的第一件事，就是在还没完成所有 import 之前，<em>立刻</em>发起耗时操作。注意代码是如何在 import 语句之间穿插函数调用的——这是故意的：每个耗时操作在后台开始运行的同时，剩余的代码继续加载。</p>
+
+      <!-- 代码 ↔ 通俗解读 -->
+      <div class="translation-block animate-in" style="margin-top:var(--space-8)">
+        <div class="translation-code">
+          <span class="translation-label">main.tsx</span>
+<code><span class="code-line"><span class="code-keyword">import</span> { profileCheckpoint, profileReport }</span>
+<span class="code-line">  <span class="code-keyword">from</span> <span class="code-string">'./utils/startupProfiler.js'</span>;</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-function">profileCheckpoint</span>(<span class="code-string">'main_tsx_entry'</span>);</span>
+<span class="code-line"><span class="code-keyword">import</span> { startMdmRawRead }</span>
+<span class="code-line">  <span class="code-keyword">from</span> <span class="code-string">'./utils/settings/mdm/rawRead.js'</span>;</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-function">startMdmRawRead</span>();</span>
+<span class="code-line"><span class="code-keyword">import</span> {</span>
+<span class="code-line">  ensureKeychainPrefetchCompleted,</span>
+<span class="code-line">  startKeychainPrefetch</span>
+<span class="code-line">} <span class="code-keyword">from</span></span>
+<span class="code-line">  <span class="code-string">'./utils/secureStorage/keychainPrefetch.js'</span>;</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-function">startKeychainPrefetch</span>();</span>
+<span class="code-line"><span class="code-keyword">import</span> { feature } <span class="code-keyword">from</span> <span class="code-string">'bun:bundle'</span>;</span></code>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">通俗解读</span>
+          <div class="translation-lines">
+            <div class="tl"><strong>在文件刚开始加载的那一刻就启动性能计时器。</strong>这样开发者可以精确测量启动的每个阶段花了多长时间。</div>
+            <div class="tl"><strong>立即发起 MDM 设置读取</strong>——一个读取企业级配置的<span class="term" data-definition="由另一个程序启动的独立程序。在 Claude Code 中，子进程被用来读取系统设置、执行 shell 命令，以及执行其他适合独立运行的任务。">子进程</span>。它在后台运行，同时其余的 import 继续加载。</div>
+            <div class="tl"><strong>立即发起钥匙串读取</strong>——从操作系统中获取存储的 OAuth 令牌和 API 密钥。同样地，这与其他操作并行运行。</div>
+            <div class="tl"><strong>现在继续导入</strong>其余的模块。等到它们加载完成（约 135ms）时，钥匙串和 MDM 的结果早就已经准备好了。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-info animate-in" style="margin-top:var(--space-8)">
+        <span class="callout-icon">🔑</span>
+        <div>
+          <span class="callout-title"><span class="term" data-definition="尽早启动一个耗时操作——在你真正需要结果之前——这样它就可以在后台运行，而你同时做其他工作。等你终于需要数据时，它已经在那里等你了。就像提前在餐厅点好菜，这样你一坐下菜就上来了。">预加载</span>模式</span>
+          <p>尽早启动耗时操作，等到需要时再去获取结果。代码注释中提到，钥匙串读取大约需要 65ms，模块导入大约需要 135ms。通过让它们重叠执行，用户只需要等待较长的那个（135ms），而不是两者加起来（200ms）。当你让 AI 代理优化启动时间时，可以建议使用预加载模式。</p>
+        </div>
+      </div>
+
+      <!-- 可视化：时间线对比 -->
+      <div class="step-cards stagger-children" style="margin-top:var(--space-6)">
+        <div class="step-card animate-in" style="border-left-color:var(--color-error);">
+          <span class="step-num" style="background:var(--color-error);">❌</span>
+          <div class="step-body">
+            <strong>没有预加载（顺序执行）</strong>
+            <p>钥匙串（65ms）→ 然后 MDM（35ms）→ 然后模块导入（135ms）= <strong>总计 235ms</strong>。每个任务都要等上一个完成后才开始。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in" style="border-left-color:var(--color-success);">
+          <span class="step-num" style="background:var(--color-success);">✅</span>
+          <div class="step-body">
+            <strong>使用预加载（并行执行）</strong>
+            <p>钥匙串 + MDM + 模块导入同时启动 = <strong>总计约 135ms</strong>。你只需要等最慢的那个，速度提升将近 2 倍！</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 3 — 懒加载——按需付费
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">懒加载——按需付费</h3>
+
+      <p>重量级模块不会在启动时加载——它们是在真正需要时才被<span class="term" data-definition="仅在首次需要时才加载模块或资源，而不是在启动时一次性全部加载。这减少了初始加载时间，因为程序跳过了在当前会话中可能根本用不到的昂贵导入。">动态导入</span>的。如果用户根本不会用到需要 gRPC 的功能，何必加载 700KB 的 gRPC 代码呢？</p>
+
+      <p>init 函数还展示了另一个关键模式：<span class="term" data-definition="一种缓存技术，它会将昂贵函数调用的结果缓存起来，使后续相同输入的调用可以立即返回缓存结果，而无需重新执行函数。就像把答案写在便利贴上——下次有人问时，你直接看便利贴就行了。">memoize（记忆化）</span>。它包裹了初始化逻辑，确保无论被调用多少次，实际初始化只执行一次。</p>
+
+      <!-- 代码 ↔ 通俗解读 -->
+      <div class="translation-block animate-in" style="margin-top:var(--space-8)">
+        <div class="translation-code">
+          <span class="translation-label">entrypoints/init.ts</span>
+<code><span class="code-line"><span class="code-keyword">export const</span> <span class="code-function">init</span> <span class="code-operator">=</span> <span class="code-function">memoize</span>(</span>
+<span class="code-line">  <span class="code-keyword">async</span> (): <span class="code-tag">Promise</span>&lt;<span class="code-keyword">void</span>&gt; <span class="code-operator">=&gt;</span> {</span>
+<span class="code-line">  <span class="code-keyword">const</span> initStartTime <span class="code-operator">=</span> Date.<span class="code-function">now</span>()</span>
+<span class="code-line">  <span class="code-function">logForDiagnosticsNoPII</span>(</span>
+<span class="code-line">    <span class="code-string">'info'</span>, <span class="code-string">'init_started'</span>)</span>
+<span class="code-line">  <span class="code-function">profileCheckpoint</span>(</span>
+<span class="code-line">    <span class="code-string">'init_function_start'</span>)</span>
+<span class="code-line"></span>
+<span class="code-line">  <span class="code-keyword">try</span> {</span>
+<span class="code-line">    <span class="code-keyword">const</span> configsStart <span class="code-operator">=</span> Date.<span class="code-function">now</span>()</span>
+<span class="code-line">    <span class="code-function">enableConfigs</span>()</span>
+<span class="code-line">    <span class="code-function">logForDiagnosticsNoPII</span>(</span>
+<span class="code-line">      <span class="code-string">'info'</span>, <span class="code-string">'init_configs_enabled'</span>, {</span>
+<span class="code-line">      duration_ms:</span>
+<span class="code-line">        Date.<span class="code-function">now</span>() <span class="code-operator">-</span> configsStart,</span>
+<span class="code-line">    })</span>
+<span class="code-line">    <span class="code-function">profileCheckpoint</span>(</span>
+<span class="code-line">      <span class="code-string">'init_configs_enabled'</span>)</span></code>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">通俗解读</span>
+          <div class="translation-lines">
+            <div class="tl"><strong>init 函数被 memoize 包裹</strong>——意思是"只执行一次，然后记住结果"。即使 <code>init()</code> 被多次调用，实际的初始化逻辑也只会在第一次执行。</div>
+            <div class="tl"><strong>记录开始时间</strong>，这样我们可以测量初始化花了多长时间。每个阶段都会被计时并记录，用于性能诊断。</div>
+            <div class="tl"><strong>启用配置系统</strong>并测量耗时。注意计时的粒度有多细——他们精确到毫秒地测量每个子步骤来定位瓶颈。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-accent animate-in" style="margin-top:var(--space-8)">
+        <span class="callout-icon">📝</span>
+        <div>
+          <span class="callout-title">Memoize（记忆化）模式</span>
+          <p>记忆化模式在性能敏感的代码中非常常见。可以把它想象成做完一道难题后把答案写在便利贴上——下次有人再问，你直接看便利贴，而不用重新解题。在 AI 工具中，记忆化被广泛使用来避免重复计算。</p>
+        </div>
+      </div>
+
+      <!-- 可视化：memoize 工作原理 -->
+      <div class="step-cards stagger-children" style="margin-top:var(--space-6)">
+        <div class="step-card animate-in">
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <strong>第一次调用 init()</strong>
+            <p>执行完整的初始化：启用配置、设置遥测、加载设置。耗时约 50ms。结果被<strong>缓存</strong>起来。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <strong>第二次调用 init()</strong>
+            <p><strong>瞬间</strong>返回缓存结果——零工作量。函数体不会再次执行。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <strong>第三次、第四次、第五次调用……</strong>
+            <p>全部瞬间完成。无论代码库中有多少地方调用 <code>init()</code>，昂贵的初始化工作只会执行一次。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 4 — 编译时特性开关
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">编译时特性开关</h3>
+
+      <p>Claude Code 使用了一种叫做<span class="term" data-definition="从最终输出文件中移除永远不会被执行的代码的过程。如果一个特性开关在编译时被设为 false，打包器就知道那条代码路径永远不会运行，于是直接删除——让 bundle 更小、加载更快。">死代码消除</span>的强大技术。打包器在编译时求值 <code>feature()</code> 标志，然后直接把被禁用的代码从最终文件中移除。这不是<span class="term" data-definition="程序实际在计算机上运行、处理真实输入的时段。运行时的决策每次程序运行时都会发生，不同于编译时的决策——那些在编译过程中就已经被固化了。">运行时</span>的检查——如果该标志关闭，代码在你的安装中物理上就不存在。</p>
+
+      <!-- 代码 ↔ 通俗解读 -->
+      <div class="translation-block animate-in" style="margin-top:var(--space-8)">
+        <div class="translation-code">
+          <span class="translation-label">main.tsx</span>
+<code><span class="code-line"><span class="code-keyword">const</span> coordinatorModeModule <span class="code-operator">=</span></span>
+<span class="code-line">  <span class="code-function">feature</span>(<span class="code-string">'COORDINATOR_MODE'</span>)</span>
+<span class="code-line">    <span class="code-operator">?</span> <span class="code-function">require</span>(</span>
+<span class="code-line">        <span class="code-string">'./coordinator/coordinatorMode.js'</span></span>
+<span class="code-line">      ) <span class="code-keyword">as typeof</span> <span class="code-keyword">import</span>(</span>
+<span class="code-line">        <span class="code-string">'./coordinator/coordinatorMode.js'</span>)</span>
+<span class="code-line">    <span class="code-operator">:</span> <span class="code-keyword">null</span>;</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-keyword">const</span> assistantModule <span class="code-operator">=</span></span>
+<span class="code-line">  <span class="code-function">feature</span>(<span class="code-string">'KAIROS'</span>)</span>
+<span class="code-line">    <span class="code-operator">?</span> <span class="code-function">require</span>(</span>
+<span class="code-line">        <span class="code-string">'./assistant/index.js'</span></span>
+<span class="code-line">      ) <span class="code-keyword">as typeof</span> <span class="code-keyword">import</span>(</span>
+<span class="code-line">        <span class="code-string">'./assistant/index.js'</span>)</span>
+<span class="code-line">    <span class="code-operator">:</span> <span class="code-keyword">null</span>;</span>
+<span class="code-line"><span class="code-keyword">const</span> kairosGate <span class="code-operator">=</span></span>
+<span class="code-line">  <span class="code-function">feature</span>(<span class="code-string">'KAIROS'</span>)</span>
+<span class="code-line">    <span class="code-operator">?</span> <span class="code-function">require</span>(</span>
+<span class="code-line">        <span class="code-string">'./assistant/gate.js'</span></span>
+<span class="code-line">      ) <span class="code-keyword">as typeof</span> <span class="code-keyword">import</span>(</span>
+<span class="code-line">        <span class="code-string">'./assistant/gate.js'</span>)</span>
+<span class="code-line">    <span class="code-operator">:</span> <span class="code-keyword">null</span>;</span></code>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">通俗解读</span>
+          <div class="translation-lines">
+            <div class="tl"><strong>如果 COORDINATOR_MODE 特性在编译时被开启，</strong>就加载协调器模块。否则，它就是 <code>null</code>——而打包器会把所有协调器相关的代码从最终文件中彻底移除。</div>
+            <div class="tl"><strong>KAIROS（助手模式）也是同理</strong>——如果该标志在编译时关闭，这些文件在你的安装中根本不存在。没有任何多余的负担。</div>
+            <div class="tl"><strong>这不是运行时检查。</strong>打包器在构建应用时会直接删除未使用的代码路径，使最终文件更小、加载更快。</div>
+          </div>
+        </div>
+      </div>
+
+      <p style="margin-top:var(--space-6)">以下是 Claude Code 代码库中一些常见的特性开关：</p>
+
+      <!-- BADGE LIST -->
+      <div class="badge-list stagger-children" style="margin-top:var(--space-4)">
+        <div class="badge-item animate-in">
+          <span class="badge-code">COORDINATOR_MODE</span>
+          <span class="badge-desc">多智能体协调功能</span>
+        </div>
+        <div class="badge-item animate-in">
+          <span class="badge-code">KAIROS</span>
+          <span class="badge-desc">助手/对话模式</span>
+        </div>
+        <div class="badge-item animate-in">
+          <span class="badge-code">VOICE_MODE</span>
+          <span class="badge-desc">语音输入集成</span>
+        </div>
+        <div class="badge-item animate-in">
+          <span class="badge-code">REACTIVE_COMPACT</span>
+          <span class="badge-desc">智能上下文压缩</span>
+        </div>
+        <div class="badge-item animate-in">
+          <span class="badge-code">CONTEXT_COLLAPSE</span>
+          <span class="badge-desc">替代性上下文管理方案</span>
+        </div>
+        <div class="badge-item animate-in">
+          <span class="badge-code">DIRECT_CONNECT</span>
+          <span class="badge-desc">直连服务器协议</span>
+        </div>
+        <div class="badge-item animate-in">
+          <span class="badge-code">BG_SESSIONS</span>
+          <span class="badge-desc">后台会话支持</span>
+        </div>
+      </div>
+
+      <div class="callout callout-info animate-in" style="margin-top:var(--space-6)">
+        <span class="callout-icon">💡</span>
+        <div>
+          <span class="callout-title">为什么不直接用 if/else？</span>
+          <p>普通的 <code>if/else</code> 检查发生在运行时——两个分支的代码都存在于最终文件中，占用空间并拖慢加载速度。而使用编译时特性开关，打包器看到条件永远为 <code>false</code>，就会删除整个分支，最终文件在物理上变得更小。这就好比在一个房间门口挂个"关闭"的牌子，和直接把那个房间拆掉之间的区别。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 5 — Print 模式的捷径
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">Print 模式的捷径</h3>
+
+      <p>Claude Code 对它的 <code>--print</code>（无头/非交互式）模式有一个巧妙的优化。当你运行 <code>claude -p "explain this function"</code> 时，你不需要完整的交互体验——你只需要一个答案。那为什么要浪费时间去设置你根本用不到的功能呢？</p>
+
+      <p>在 print 模式下，Claude Code 会跳过向命令解析器注册大部分子命令的步骤。注册 <code>claude doctor</code>、<code>claude mcp</code>、<code>claude config</code> 等 20 多个命令是有成本的——累计需要数十毫秒。在 print 模式中，只需要核心的查询功能，所以其他一切都被跳过了。</p>
+
+      <div class="step-cards stagger-children" style="margin-top:var(--space-8)">
+        <div class="step-card animate-in">
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <strong>检查是否运行在 print 模式</strong>
+            <p>在命令参数中查找 <code>-p</code> 或 <code>--print</code> 标志。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <strong>如果是，跳过注册 20 多个子命令</strong>
+            <p>不注册 <code>doctor</code>、<code>mcp</code>、<code>config</code>、<code>api-key</code> 等等。节省数十毫秒。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <strong>直接进入构建查询</strong>
+            <p>跳过其他步骤，直奔核心：构建提示词、调用 API、流式输出响应、打印结果。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <strong>结果：启动速度明显更快</strong>
+            <p>Print 模式比交互模式启动更快，因为它只为真正需要的东西付费。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 可视化：交互模式 vs Print 模式对比 -->
+      <div class="translation-block animate-in" style="margin-top:var(--space-8)">
+        <div class="translation-code" style="font-family:var(--font-body);font-size:var(--text-sm);line-height:1.8;">
+          <span class="translation-label">交互模式</span>
+          <div style="margin-top:var(--space-6)">
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#A6E3A1;">✓</span> <span style="color:#CDD6F4;">注册 <code style="color:#89B4FA;">claude doctor</code></span>
+            </div>
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#A6E3A1;">✓</span> <span style="color:#CDD6F4;">注册 <code style="color:#89B4FA;">claude mcp</code></span>
+            </div>
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#A6E3A1;">✓</span> <span style="color:#CDD6F4;">注册 <code style="color:#89B4FA;">claude config</code></span>
+            </div>
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#A6E3A1;">✓</span> <span style="color:#CDD6F4;">注册 <code style="color:#89B4FA;">claude api-key</code></span>
+            </div>
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#CDD6F4;opacity:0.5;">… 还有 20 多个子命令 …</span>
+            </div>
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#A6E3A1;">✓</span> <span style="color:#CDD6F4;">初始化 REPL 界面</span>
+            </div>
+            <div style="padding:var(--space-2) 0;">
+              <span style="color:#FAB387;">完整启动开销</span>
+            </div>
+          </div>
+        </div>
+        <div class="translation-english" style="background:var(--color-success-light);border-left-color:var(--color-success);">
+          <span class="translation-label" style="color:var(--color-success);">Print 模式</span>
+          <div class="translation-lines">
+            <div class="tl" style="padding:var(--space-3) 0;">
+              <span style="color:var(--color-error);">✗</span> <strong>跳过所有子命令</strong>——单次查询不需要它们
+            </div>
+            <div class="tl" style="padding:var(--space-3) 0;">
+              <span style="color:var(--color-error);">✗</span> <strong>跳过 REPL 界面</strong>——输出直接送到 stdout
+            </div>
+            <div class="tl" style="padding:var(--space-3) 0;">
+              <span style="color:var(--color-success);">✓</span> <strong>构建查询 → 调用 API → 打印结果</strong>
+            </div>
+            <div class="tl" style="padding:var(--space-3) 0;color:var(--color-success);">
+              <strong>更快的启动——只为你需要的东西付费</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-accent animate-in" style="margin-top:var(--space-6)">
+        <span class="callout-icon">🎯</span>
+        <div>
+          <span class="callout-title">核心原则</span>
+          <p>三种策略——预加载、懒加载和编译时消除——都遵循同一个原则：<strong>不做不需要做的工作</strong>。预加载让工作重叠执行，懒加载推迟工作，特性开关删除工作，Print 模式跳过工作。最快的代码就是从不运行的代码。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 6 — 检验你的理解
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">检验你的理解</h3>
+
+      <div class="quiz-container animate-in" id="quiz-module5">
+
+        <!-- Q1 — 场景题 -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="由于获取认证令牌和加载模块之间互不依赖，你可以让它们并行运行。总时间就变成了最慢那个操作的时长（300ms），而不是两者之和（500ms）。这正是 Claude Code 对钥匙串读取和模块导入所做的事情。"
+             data-explanation-wrong="关键洞察在于：这两个操作是独立的——它们都不需要对方的结果。当操作互相独立时，你可以让它们重叠执行（并行运行），总时间就降到最慢那个的时长。换一种编程语言、永久缓存或跳过加载要么帮助不大，要么会带来其他问题。">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">场景</span>
+              <p>你正在开发一个 AI 工具，启动需要 500ms。你发现其中 200ms 花在获取认证令牌上，300ms 花在加载模块上。这两个操作互不依赖。</p>
+            </div>
+          </div>
+          <div class="quiz-question">你会怎样加速启动？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>换一种更快的编程语言</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>让两个操作并行运行——启动时间降至 300ms</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>永久缓存认证令牌</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>跳过模块加载</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="memoize 包裹一个函数，使其函数体只执行一次。第一次调用运行真正的代码并缓存结果。之后的每次调用都立即返回缓存结果，跳过所有昂贵的工作。这对于代码库中多个地方都可能调用的初始化函数来说非常理想。"
+             data-explanation-wrong="memoize 不会让函数运行得更快，也不会防止错误或加密任何东西。它确保函数体只在第一次调用时执行。之后，每次调用都返回第一次执行的缓存结果。把它想象成一张写着答案的便利贴：解一次题，以后永远读便利贴就行。">
+          <div class="quiz-question"><code>memoize</code> 对 <code>init()</code> 函数做了什么？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>让它每次运行得更快</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>确保它只执行一次，后续调用返回缓存结果</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>防止错误导致应用崩溃</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>加密初始化数据</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="当 feature() 标志在编译时返回 false，打包器就知道那条代码路径永远不会执行。它会把整个分支——所有语音模式的源代码——从最终 bundle 中移除。代码在输出文件中物理上不存在。这就是死代码消除的实际效果。"
+             data-explanation-wrong="编译时特性开关比运行时检查更强大。当打包器看到 feature(VOICE_MODE) 为 false 时，它不只是在运行时跳过代码——它会把代码从最终文件中彻底移除。语音模式的代码不是被压缩、不是被隐藏、也不会抛出错误。它在 bundle 中根本就不存在。">
+          <div class="quiz-question"><code>feature('VOICE_MODE')</code> 在编译时返回 false。语音模式的代码会怎样？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>留在 bundle 中但永远不会被调用</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>从最终 bundle 中被彻底移除</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>被压缩以节省空间</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>访问时会抛出错误</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div style="display:flex;gap:var(--space-3);margin-top:var(--space-6)">
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module5')">检查答案</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module5')">重置</button>
+        </div>
+
+      </div><!-- /quiz-container -->
+    </div><!-- /screen 6 -->
+
+    <!-- ── 核心要点 ──────────────────────────────────────────── -->
+    <div class="callout callout-info animate-in" style="margin-top:var(--space-4);margin-bottom:var(--space-8)">
+      <span class="callout-icon">🎯</span>
+      <div>
+        <span class="callout-title">核心要点</span>
+        <p>Claude Code 之所以能让一个极其复杂的程序在 200 毫秒内启动，靠的是一个原则：<strong>绝不做不需要做的工作</strong>。预加载让耗时操作重叠执行，这样你只需要等最长的那个而不是全部加起来。记忆化确保昂贵的函数只运行一次。编译时特性开关从物理上移除未使用的代码。Print 模式跳过一切非必要的步骤。这些并不是什么高深的技巧——它们是实用的工程模式，你可以应用到你开发的任何软件中，也可以让 AI 来帮你实现。</p>
+      </div>
+    </div>
+
+  </div><!-- /module-content -->
+</section>

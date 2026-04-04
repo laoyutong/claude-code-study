@@ -1,0 +1,313 @@
+<!-- ════════════════════════════════════════════════════════════
+     模块 1 — 什么是 Claude Code？
+     ════════════════════════════════════════════════════════════ -->
+<section class="module" id="module-1" style="background:var(--color-bg-warm)">
+  <div class="module-content">
+
+    <!-- ── 模块头部 ─────────────────────────────────────── -->
+    <header class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h2 class="module-title">什么是 Claude Code？</h2>
+      <p class="module-subtitle">一台拥有超能力的对讲机——你对着它说话，一位天才助手回答你，而且它还能伸出手来帮你<em>搞定事情</em>。</p>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════════════
+         第一屏 — 终端里的 AI 助手
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">终端里的 AI 助手</h3>
+
+      <p>你打开<span class="term" data-definition="一种基于文本的界面，通过输入命令来控制你的计算机。也叫命令行、Shell 或控制台。">终端</span>，输入 <code>claude</code>，然后开始和一个能阅读你代码库、编辑文件、执行命令的 AI 聊天。但当你按下回车到看到回复之间，到底发生了什么？</p>
+
+      <p>Claude Code 是 Anthropic 打造的一款命令行 AI 编程助手。你用自然语言——就是日常说的大白话——提问或下达指令，它就能阅读你的代码、编辑文件、执行命令。就好比有一位资深开发者在和你结对编程，只不过他住在你的<span class="term" data-definition="一种基于文本的界面，通过输入命令来控制你的计算机。也叫命令行、Shell 或控制台。">终端</span>里。</p>
+
+      <div class="callout callout-info animate-in">
+        <span class="callout-icon">💡</span>
+        <div>
+          <span class="callout-title">终端 vs. 浏览器</span>
+          <p>跟 ChatGPT（在浏览器中运行）不同，Claude Code 是一个 <span class="term" data-definition="命令行界面（Command-Line Interface）——一种通过在终端里输入文本命令来交互的程序，而不是在图形窗口里点点按钮。">CLI</span> 程序，直接在你的电脑上运行。这很关键，因为它可以<strong>直接访问</strong>你本地的文件和终端——再也不用在聊天窗口和编辑器之间来回复制粘贴代码了。</p>
+        </div>
+      </div>
+
+      <div class="pattern-cards stagger-children" style="margin-top:var(--space-8)">
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">🧠</div>
+          <div class="pattern-title">理解代码</div>
+          <p class="pattern-desc">读取你的文件，了解项目结构，理清各个模块之间的关系——就像一个刚把你整个代码库通读一遍的开发者。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">✏️</div>
+          <div class="pattern-title">编写代码</div>
+          <p class="pattern-desc">直接在你的电脑上编辑、创建和删除文件。再也不用从聊天窗口复制代码片段粘贴到编辑器里了。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">⚡</div>
+          <div class="pattern-title">执行命令</div>
+          <p class="pattern-desc">执行 Shell 命令、安装依赖、跑测试、检查结果——然后根据执行结果决定下一步该怎么做。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         第二屏 — 按下回车后发生了什么
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">按下回车后发生了什么</h3>
+
+      <p>当你输入一条<span class="term" data-definition="你给 AI 模型的文本输入——你的问题、指令或请求。它是每次交互的起点。">提示词</span>，比如 <em>"修复 auth.ts 里的 bug"</em>，然后按下回车，幕后会触发一整条事件链。让我们跟踪这条消息的完整旅程：</p>
+
+      <div class="step-cards stagger-children" style="margin-top:var(--space-6)">
+        <div class="step-card animate-in">
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <strong>你输入提示词</strong>
+            <p>你在终端里写下 <em>"修复 auth.ts 里的 bug"</em>，然后按下回车。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <strong><span class="term" data-definition="读取-求值-打印 循环（Read-Eval-Print Loop）——一种交互式环境，它读取你的输入、处理它、输出结果，然后循环等待下一次输入。Claude Code 的聊天界面就是一个 REPL。">REPL</span> 捕获你的输入</strong>
+            <p>终端 <span class="term" data-definition="用户界面（User Interface）——程序中你能看到并与之交互的部分。在 Claude Code 里，UI 使用 React 和 Ink 在终端中渲染。">UI</span>（基于 <span class="term" data-definition="一个用于构建用户界面的 JavaScript 库。最初为浏览器设计，Claude Code 借助 Ink 将它用于终端界面渲染。">React</span> + Ink 构建）获取你的文本并准备进行处理。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <strong>上下文和你的消息打包在一起</strong>
+            <p>你的提示词会被附加上额外的上下文：一个系统<span class="term" data-definition="你给 AI 模型的文本输入——你的问题、指令或请求。它是每次交互的起点。">提示词</span>（给 Claude 的指令）、过往对话的记忆，以及项目信息。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <strong>发送到 Claude 的 <span class="term" data-definition="应用程序编程接口（Application Programming Interface）——两个程序相互通信的方式。Claude Code 使用 Anthropic 的 API 通过互联网发送提示词并接收回复。">API</span></strong>
+            <p>打包好的内容通过互联网发送到 Anthropic 的服务器，由 Claude AI 模型进行处理。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">5</span>
+          <div class="step-body">
+            <strong>Claude <span class="term" data-definition="一种技术，AI 的回复会在生成过程中逐片段返回，而不是等到全部生成完毕。这让回复感觉更快。">流式</span>返回回复</strong>
+            <p>回复一个 token 一个 token（逐词）地到达——而且可能包含使用工具的请求，比如编辑某个文件。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">6</span>
+          <div class="step-body">
+            <strong>工具执行</strong>
+            <p>如果 Claude 判断需要<em>做点什么</em>——比如读取文件或者应用一个编辑——工具系统就会在你的电脑上执行相应操作。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">7</span>
+          <div class="step-body">
+            <strong>结果反馈回去</strong>
+            <p>工具的执行结果（比如文件内容，或者"编辑已成功应用"）会被发送回 Claude，作为下一轮推理的输入。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">8</span>
+          <div class="step-body">
+            <strong>最终回答</strong>
+            <p>Claude 给出一个人类可读的回答：<em>"我在 auth.ts 第 42 行发现并修复了空值检查的 bug。"</em></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-accent animate-in" style="margin-top:var(--space-8)">
+        <span class="callout-icon">✨</span>
+        <div>
+          <span class="callout-title">智能体循环（Agent Loop）</span>
+          <p>这种模式——AI 决定该做什么、执行操作、观察结果、然后再次决策的循环——被称为<span class="term" data-definition="一个不断重复的循环：AI 模型思考要采取什么行动、执行该行动、观察结果、然后再次思考。这就是让 Claude Code 不只是一个聊天机器人的关键——它能规划和执行多步骤任务。">智能体循环</span>。这是现代 AI 中最重要的概念之一。Claude Code 不只是在回答问题；它在一个持续的循环中进行推理、执行操作、不断调整。第 5–7 步可能会重复很多次，直到 Claude 给出最终答案。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         第三屏 — 技术栈
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">技术栈</h3>
+
+      <p>Claude Code 由一组精心挑选的技术构建而成。下面是驱动它运行的核心技术：</p>
+
+      <div class="icon-rows stagger-children">
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-accent-light);color:var(--color-accent);">
+            <strong>TS</strong>
+          </div>
+          <div>
+            <strong><span class="term" data-definition="一种为 JavaScript 添加类型注解的编程语言，能在代码运行前捕获错误。Claude Code 的整个代码库都是用 TypeScript 编写的。">TypeScript</span></strong>
+            <p>所有代码所使用的编程语言——带类型安全的 JavaScript。</p>
+          </div>
+        </div>
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-info-light);color:var(--color-info);">⚛️</div>
+          <div>
+            <strong><span class="term" data-definition="一个用于构建用户界面的 JavaScript 库。最初为浏览器设计，Claude Code 借助 Ink 将它用于终端界面渲染。">React</span> + Ink</strong>
+            <p>在终端中渲染 UI——注意，不是浏览器！Ink 是一个库，让你可以用 React <span class="term" data-definition="一个独立的、可复用的 UI 单元。在 React 中，组件就像积木——你把小组件拼成大组件，最终搭建出完整的界面。">组件</span>来构建终端界面。</p>
+          </div>
+        </div>
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-success-light);color:var(--color-success);">🥟</div>
+          <div>
+            <strong><span class="term" data-definition="一个快速的 JavaScript 运行时（类似 Node.js，但更新更快），还能原生打包和运行 TypeScript。Claude Code 使用 Bun 来实现快速启动和代码打包。">Bun</span></strong>
+            <p>JavaScript 运行时和打包工具——类似 Node.js，但更快。负责运行和打包代码。</p>
+          </div>
+        </div>
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-error-light);color:#C93B3B;">🤖</div>
+          <div>
+            <strong>Anthropic <span class="term" data-definition="软件开发工具包（Software Development Kit）——一个提供现成函数来与某个服务通信的库。Anthropic SDK 让发送提示词给 Claude 并获取回复变得很简单。">SDK</span></strong>
+            <p>与 Claude AI 大脑对话的官方库——负责发送提示词和接收回复。</p>
+          </div>
+        </div>
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:#F3EAF8;color:#7B6DAA;">⌨️</div>
+          <div>
+            <strong>Commander.js</strong>
+            <p>解析命令行参数——当你运行 <code>claude</code> 时，它能识别 <code>--model</code> 或 <code>--verbose</code> 这样的标志位。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 代码 ↔ 通俗解读 -->
+      <div class="translation-block animate-in" style="margin-top:var(--space-10)">
+        <div class="translation-code">
+          <span class="translation-label">replLauncher.tsx</span>
+<code><span class="code-line"><span class="code-keyword">export async function</span> <span class="code-function">launchRepl</span>(</span>
+<span class="code-line">  root: Root,</span>
+<span class="code-line">  appProps: AppWrapperProps,</span>
+<span class="code-line">  replProps: REPLProps,</span>
+<span class="code-line">  renderAndRun: (root: Root, element: <span class="code-tag">React.ReactNode</span>) <span class="code-operator">=></span> <span class="code-tag">Promise</span>&lt;<span class="code-keyword">void</span>&gt;</span>
+<span class="code-line">): <span class="code-tag">Promise</span>&lt;<span class="code-keyword">void</span>&gt; {</span>
+<span class="code-line">  <span class="code-keyword">const</span> {</span>
+<span class="code-line">    <span class="code-property">App</span></span>
+<span class="code-line">  } <span class="code-operator">=</span> <span class="code-keyword">await</span> <span class="code-function">import</span>(<span class="code-string">'./components/App.js'</span>);</span>
+<span class="code-line">  <span class="code-keyword">const</span> {</span>
+<span class="code-line">    <span class="code-property">REPL</span></span>
+<span class="code-line">  } <span class="code-operator">=</span> <span class="code-keyword">await</span> <span class="code-function">import</span>(<span class="code-string">'./screens/REPL.js'</span>);</span>
+<span class="code-line">  <span class="code-keyword">await</span> <span class="code-function">renderAndRun</span>(root, <span class="code-tag">&lt;App</span> <span class="code-attr">{...appProps}</span><span class="code-tag">&gt;</span></span>
+<span class="code-line">      <span class="code-tag">&lt;REPL</span> <span class="code-attr">{...replProps}</span> <span class="code-tag">/&gt;</span></span>
+<span class="code-line">    <span class="code-tag">&lt;/App&gt;</span>);</span>
+<span class="code-line">}</span></code>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">通俗解读</span>
+          <div class="translation-lines">
+            <div class="tl"><strong>第 1 行：</strong>定义一个叫 <code>launchRepl</code> 的函数，用来启动交互式终端界面。它需要屏幕（root）、应用设置、REPL 设置，以及一个渲染方法。</div>
+            <div class="tl"><strong>第 2–7 行：</strong>加载两个核心<span class="term" data-definition="一个独立的、可复用的 UI 单元。在 React 中，组件就像积木——你把小组件拼成大组件，最终搭建出完整的界面。">组件</span>——<strong>App</strong> 包裹层（提供全局状态）和 <strong>REPL</strong> 屏幕（也就是实际的聊天界面）。它们是按需懒加载的，这样启动速度更快。</div>
+            <div class="tl"><strong>第 8–10 行：</strong>把 REPL 屏幕嵌套在 App 包裹层里面进行渲染——就像嵌套 HTML 标签一样，只不过这里渲染在你的终端里而不是浏览器里。</div>
+          </div>
+        </div>
+      </div>
+
+      <p style="margin-top:var(--space-4);color:var(--color-text-secondary);font-size:var(--text-sm);">这是 Claude Code 代码库中的真实代码。注意它使用 React 组件（<code>&lt;App&gt;</code>、<code>&lt;REPL&gt;</code>），跟开发 Web 应用一模一样——只不过所有内容都渲染在你的终端里，而不是浏览器中。</p>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         第四屏 — 小测验
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">检验你的理解</h3>
+
+      <div class="quiz-container animate-in" id="quiz-module1">
+
+        <!-- 第 1 题 -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="到 Anthropic API 的网络往返——发送你的提示词并等待 AI 模型生成回复——是整个过程中最慢的环节。其他步骤都在本地执行，几乎是瞬间完成的。"
+             data-explanation-wrong="通过互联网调用 API 通常是最大的瓶颈。输入捕获是即时的，终端渲染很快，读取本地文件也很快。真正耗时的是到 Claude 服务器的网络往返。">
+          <div class="quiz-question">你发现 Claude Code 回复很慢。根据你学到的提示词传输流程，哪个步骤最有可能是瓶颈？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>在终端中捕获你的输入</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>发送到 Claude 的 API 并等待回复</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>在终端中渲染文本</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>读取你的项目文件</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- 第 2 题 -->
+        <div class="quiz-question-block" data-correct="c"
+             data-explanation-right="在终端中运行让 Claude Code 可以直接访问你的本地文件和 Shell 命令。它能在你的电脑上读取、写入和执行操作——这是浏览器端工具很难做到的。"
+             data-explanation-wrong="关键优势在于可以直接访问你的本地文件和命令。浏览器端工具需要你来回复制粘贴代码，而在本地运行的 CLI 工具可以直接读取和编辑文件。">
+          <div class="quiz-question">为什么 Claude Code 运行在终端里而不是浏览器中？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>因为看起来更酷</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>终端比浏览器更快</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它需要直接访问你的本地文件和命令</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>浏览器不支持 AI</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- 第 3 题 -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="智能体循环是关键区别。Claude Code 不只是生成文本——它能执行工具（读取文件、编写代码、运行命令）并对结果进行推理。它在替你行动，而不仅仅是聊天。"
+             data-explanation-wrong="让 Claude Code 与众不同的不是模型本身或界面——而是通过工具执行操作的能力。它能读取你的代码、编辑文件、运行测试，并根据结果做出调整——这是一个完整的智能体循环，而不只是问答。">
+          <div class="quiz-question">有朋友说 Claude Code "不过是个聊天机器人"。根据你学到的内容，它有什么不同？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它用了更新的 AI 模型</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它能通过工具在你的电脑上执行操作</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它的界面更好看</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它可以离线工作</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div style="display:flex;gap:var(--space-3);margin-top:var(--space-6)">
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">检查答案</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">重置</button>
+        </div>
+
+      </div><!-- /quiz-container -->
+    </div><!-- /第四屏 -->
+
+    <!-- ── 这跟我有什么关系？ ────────────────────────────────── -->
+    <div class="callout callout-info animate-in" style="margin-top:var(--space-4);margin-bottom:var(--space-8)">
+      <span class="callout-icon">🎯</span>
+      <div>
+        <span class="callout-title">了解这些对我有什么用？</span>
+        <p>理解 Claude Code 的架构能帮你在它卡住时<strong>排查问题</strong>（是 API 的问题？工具报错？还是权限不对？），<strong>清楚它能做什么、不能做什么</strong>（它能执行命令但不能浏览网页），以及<strong>写出更好的提示词</strong>（给它需要的上下文，这样它就不会浪费轮次去到处搜索了）。</p>
+      </div>
+    </div>
+
+  </div><!-- /module-content -->
+</section>

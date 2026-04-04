@@ -1,0 +1,412 @@
+<!-- ════════════════════════════════════════════════════════════
+     MODULE 3 — 对话循环
+     ════════════════════════════════════════════════════════════ -->
+<section class="module" id="module-3" style="background:var(--color-bg-warm)">
+  <div class="module-content">
+
+    <!-- ── MODULE HEADER ─────────────────────────────────────── -->
+    <header class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h2 class="module-title">对话循环</h2>
+      <p class="module-subtitle">就像下一盘邮寄棋——你走一步，对手研究棋盘后回应，有时还会请裁判代为执行操作。如此你来我往，直到将杀为止。</p>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 1 — 心跳
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">心跳</h3>
+
+      <p><code>query.ts</code> 中的对话循环是 Claude Code 的心脏。每一次交互——从一个简单的提问到一次大规模的代码重构——都要经过这个长达 1,700 行的函数。它是让一切运转起来的引擎。</p>
+
+      <p>循环的核心是一个名为 <code>query()</code> 的<span class="term" data-definition="一种特殊的函数，可以随时间推移产出（yield）多个值，并在每次产出之间暂停。配合 async（用于处理网络调用等耗时操作），Claude Code 就能在响应片段到达时立即推送给你，而不用等整个响应完成。">异步生成器</span>函数。它不会一次性算出完整答案再交给你，而是像电视直播一样，逐帧发送事件——文本片段、工具调用、状态更新——边生成边<span class="term" data-definition="一个关键字，用于暂停生成器函数并向外部监听者发送一个值。可以把它想象成一条传送带——每次 yield 就是把一个物品放上传送带，让消费者取走。">产出</span>，而不是等整部电影渲染完毕。</p>
+
+      <!-- 代码 ↔ 通俗解读 -->
+      <div class="translation-block animate-in" style="margin-top:var(--space-8)">
+        <div class="translation-code">
+          <span class="translation-label">query.ts</span>
+<code><span class="code-line"><span class="code-keyword">export async function</span>* <span class="code-function">query</span>(</span>
+<span class="code-line">  params: <span class="code-tag">QueryParams</span>,</span>
+<span class="code-line">): <span class="code-tag">AsyncGenerator</span>&lt;</span>
+<span class="code-line">  | <span class="code-tag">StreamEvent</span></span>
+<span class="code-line">  | <span class="code-tag">RequestStartEvent</span></span>
+<span class="code-line">  | <span class="code-tag">Message</span></span>
+<span class="code-line">  | <span class="code-tag">TombstoneMessage</span></span>
+<span class="code-line">  | <span class="code-tag">ToolUseSummaryMessage</span>,</span>
+<span class="code-line">  <span class="code-tag">Terminal</span></span>
+<span class="code-line">&gt; {</span>
+<span class="code-line">  <span class="code-keyword">const</span> consumedCommandUuids: <span class="code-tag">string</span>[] <span class="code-operator">=</span> []</span>
+<span class="code-line">  <span class="code-keyword">const</span> terminal <span class="code-operator">=</span> <span class="code-keyword">yield</span>* <span class="code-function">queryLoop</span>(params, consumedCommandUuids)</span>
+<span class="code-line">  <span class="code-keyword">for</span> (<span class="code-keyword">const</span> uuid <span class="code-keyword">of</span> consumedCommandUuids) {</span>
+<span class="code-line">    <span class="code-function">notifyCommandLifecycle</span>(uuid, <span class="code-string">'completed'</span>)</span>
+<span class="code-line">  }</span>
+<span class="code-line">  <span class="code-keyword">return</span> terminal</span>
+<span class="code-line">}</span></code>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">通俗解读</span>
+          <div class="translation-lines">
+            <div class="tl"><strong>第 1 行：</strong>定义一个名为 <code>query</code> 的函数，它会生成一个事件流。那个 <code>*</code> 让它成为生成器——可以把它想象成电视直播，一帧一帧地发送画面，而不是等整部电影拍完才给你看。</div>
+            <div class="tl"><strong>第 2–9 行：</strong>它可以产出不同类型的事件：<span class="term" data-definition="一种技术，AI 的响应会在生成过程中逐片段发回，而不是等整个响应完成。这让响应感觉更快、更具交互性。">流式</span>数据块、新消息、工具使用摘要等等。每种类型代表对话回合中可能发生的不同事件。</div>
+            <div class="tl"><strong>第 10 行：</strong>跟踪在这个回合中消耗了哪些斜杠命令（比如 <code>/compact</code> 或 <code>/clear</code>）。</div>
+            <div class="tl"><strong>第 11 行：</strong>运行主对话循环。<code>yield*</code> 的意思是"把 <code>queryLoop</code> 的所有事件直接转发给监听者"——就像把一个直播信号接入另一个直播。</div>
+            <div class="tl"><strong>第 12–14 行：</strong>循环结束后，通知每个已消耗的命令执行成功。</div>
+          </div>
+        </div>
+      </div>
+
+      <p style="margin-top:var(--space-4);color:var(--color-text-secondary);font-size:var(--text-sm);">这就是 Claude Code 代码库的真正入口。<code>query()</code> 函数只是一个轻量包装，它把所有繁重的工作都委托给了 <code>queryLoop</code>——也就是我们接下来要探索的真正引擎。</p>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 2 — 循环状态机
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">循环状态机</h3>
+
+      <p>每次对话循环都需要在迭代之间记住一些东西——比如已经交换了哪些消息、当前是第几个<span class="term" data-definition="Claude 可以在你的电脑上执行的操作——读取文件、编写代码、运行 shell 命令、搜索代码库等等。工具是 Claude Code 从「说」到「做」的桥梁。">回合</span>、以及<span class="term" data-definition="AI 模型一次性能够容纳在工作记忆中的文本量（以 token 为单位）。可以把它想象成内存——有一个固定上限，所有内容（系统提示词、对话历史、工具结果）都必须装在里面。">上下文窗口</span>是否快满了。这个可变状态就是循环的"记忆"——一组随着对话推进而不断变化的变量。</p>
+
+      <p>在编程中，一个根据事件在一组预定义状态之间切换的系统被称为<span class="term" data-definition="一种编程模式，系统可以处于若干预定义状态之一，并根据事件或条件在状态之间转换。对话循环就是一个状态机——它循环经历「调用 API → 处理响应 → 执行工具 → 决定下一步」。">状态机</span>。对话循环正是如此：它在"调用 API"、"处理响应"和"执行工具"等状态之间循环切换，一路携带着这个状态对象。</p>
+
+      <!-- 代码 ↔ 通俗解读 -->
+      <div class="translation-block animate-in" style="margin-top:var(--space-8)">
+        <div class="translation-code">
+          <span class="translation-label">query.ts — State type</span>
+<code><span class="code-line"><span class="code-keyword">type</span> <span class="code-tag">State</span> <span class="code-operator">=</span> {</span>
+<span class="code-line">  <span class="code-property">messages</span>: <span class="code-tag">Message</span>[]</span>
+<span class="code-line">  <span class="code-property">toolUseContext</span>: <span class="code-tag">ToolUseContext</span></span>
+<span class="code-line">  <span class="code-property">autoCompactTracking</span>: <span class="code-tag">AutoCompactTrackingState</span></span>
+<span class="code-line">    | <span class="code-keyword">undefined</span></span>
+<span class="code-line">  <span class="code-property">maxOutputTokensRecoveryCount</span>: <span class="code-tag">number</span></span>
+<span class="code-line">  <span class="code-property">hasAttemptedReactiveCompact</span>: <span class="code-tag">boolean</span></span>
+<span class="code-line">  <span class="code-property">maxOutputTokensOverride</span>: <span class="code-tag">number</span></span>
+<span class="code-line">    | <span class="code-keyword">undefined</span></span>
+<span class="code-line">  <span class="code-property">pendingToolUseSummary</span>:</span>
+<span class="code-line">    <span class="code-tag">Promise</span>&lt;<span class="code-tag">ToolUseSummaryMessage</span> | <span class="code-keyword">null</span>&gt;</span>
+<span class="code-line">    | <span class="code-keyword">undefined</span></span>
+<span class="code-line">  <span class="code-property">stopHookActive</span>: <span class="code-tag">boolean</span> | <span class="code-keyword">undefined</span></span>
+<span class="code-line">  <span class="code-property">turnCount</span>: <span class="code-tag">number</span></span>
+<span class="code-line">  <span class="code-property">transition</span>: <span class="code-tag">Continue</span> | <span class="code-keyword">undefined</span></span>
+<span class="code-line">}</span></code>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">通俗解读</span>
+          <div class="translation-lines">
+            <div class="tl"><strong>messages：</strong>完整的对话历史——你和 Claude 之间交换的每一条消息，加上工具返回的结果。它会随着每个<span class="term" data-definition="对话循环的一次完整周期：Claude 接收上下文、生成响应，并可选地使用工具。在一次用户交互中可以发生多个回合。">回合</span>不断增长。</div>
+            <div class="tl"><strong>toolUseContext：</strong>权限设置、可用工具和工作区信息，用于安全地执行<span class="term" data-definition="Claude 发出的执行操作的请求——比如读取文件、编辑代码或运行 shell 命令。系统会执行该工具并将结果返回给 Claude。">工具调用</span>。</div>
+            <div class="tl"><strong>autoCompactTracking：</strong>监控上下文（记忆）的使用量。当它变得太大时，会触发自动摘要压缩。</div>
+            <div class="tl"><strong>maxOutputTokensRecoveryCount：</strong>记录 Claude 达到输出上限后系统尝试要求它继续的次数。</div>
+            <div class="tl"><strong>hasAttemptedReactiveCompact：</strong>一个防止无限<span class="term" data-definition="将较早的对话消息进行摘要或压缩以释放上下文窗口空间的过程。就像把详细的会议记录浓缩成要点，这样你就有空间继续讨论了。">压缩</span>循环的标志——每次问题只尝试压缩一次。</div>
+            <div class="tl"><strong>turnCount：</strong>循环当前处于对话的第几个回合。</div>
+            <div class="tl"><strong>transition：</strong>上一次迭代为什么继续（工具使用、压缩、恢复）——对调试很有用。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-info animate-in" style="margin-top:var(--space-6)">
+        <span class="callout-icon">💡</span>
+        <div>
+          <span class="callout-title">为什么这很重要？</span>
+          <p>这个状态对象中的每个字段都源于生产环境中遇到的真实问题。例如，<code>hasAttemptedReactiveCompact</code> 之所以存在，是因为如果没有它，一段过长的对话会尝试压缩、失败、再次尝试、再次失败——永远循环下去。一个布尔标志就防止了无限循环。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 3 — 循环的一次迭代
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">循环的一次迭代</h3>
+
+      <p>对话循环的每次迭代都遵循一个精确的流程。可以把它想象成邮寄棋局中的一个回合：收集棋盘状态，走一步棋，检查游戏是否继续。</p>
+
+      <div class="step-cards stagger-children" style="margin-top:var(--space-6)">
+        <div class="step-card animate-in">
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <strong>构建 <span class="term" data-definition="一个通过互联网发送到 Anthropic 服务器的结构化消息，包含系统提示词、对话历史、可用工具和配置。它是 Claude 生成响应所需的一切。">API 请求</span></strong>
+            <p>把系统提示词、用户上下文、可用工具和完整的消息历史打包成一个请求，准备发送。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <strong>调用 Claude API</strong>
+            <p>把所有内容发送到 Anthropic 的服务器，并开始<span class="term" data-definition="一种技术，AI 的响应会在生成过程中逐片段发回，而不是等整个响应完成。这让响应感觉更快、更具交互性。">流式</span>接收响应。在 Claude 思考的过程中，连接保持打开。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <strong>处理流</strong>
+            <p>收集到达的文本片段、工具使用块和思维块——同时转发到界面，让你实时看到文字逐步出现。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <strong>检查工具调用</strong>
+            <p>响应完成后检查：Claude 是否请求了任何工具？如果是，准备执行这些工具。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">5</span>
+          <div class="step-body">
+            <strong>执行工具</strong>
+            <p>运行请求的工具——读取文件、编写代码、运行 shell 命令——并收集结果。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">6</span>
+          <div class="step-body">
+            <strong>决定：继续还是停止？</strong>
+            <p>如果有工具返回结果，就把它们加入消息历史，然后回到第 1 步。如果没有工具被请求，这个回合就完成了——交付最终答案。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOOP DIAGRAM -->
+      <div class="flow-animation animate-in" id="loop-flow" data-steps='[
+        {"highlight":"loop-step-build","label":"第 1 步：构建 API 请求——收集系统提示词、工具和消息历史"},
+        {"highlight":"loop-step-call","label":"第 2 步：调用 Claude API——发送所有内容并打开流式连接"},
+        {"highlight":"loop-step-stream","label":"第 3 步：处理流——收集到达的文本、工具块和思维内容"},
+        {"highlight":"loop-step-check","label":"第 4 步：检查工具调用——Claude 是否请求执行操作？"},
+        {"highlight":"loop-step-exec","label":"第 5 步：执行工具——读取文件、编写代码、运行命令"},
+        {"highlight":"loop-step-decide","label":"第 6 步：决定——有工具结果则回到第 1 步；没有工具调用则结束"}
+      ]'>
+        <div class="flow-actors" style="flex-wrap:wrap;justify-content:center;gap:var(--space-6)">
+          <div class="flow-actor" id="loop-step-build">
+            <div class="flow-actor-icon" style="font-size:var(--text-lg);">📦</div>
+            <span>构建请求</span>
+          </div>
+          <div class="flow-actor" id="loop-step-call">
+            <div class="flow-actor-icon" style="font-size:var(--text-lg);">📡</div>
+            <span>调用 API</span>
+          </div>
+          <div class="flow-actor" id="loop-step-stream">
+            <div class="flow-actor-icon" style="font-size:var(--text-lg);">🌊</div>
+            <span>处理流</span>
+          </div>
+          <div class="flow-actor" id="loop-step-check">
+            <div class="flow-actor-icon" style="font-size:var(--text-lg);">🔍</div>
+            <span>检查工具</span>
+          </div>
+          <div class="flow-actor" id="loop-step-exec">
+            <div class="flow-actor-icon" style="font-size:var(--text-lg);">⚙️</div>
+            <span>执行</span>
+          </div>
+          <div class="flow-actor" id="loop-step-decide">
+            <div class="flow-actor-icon" style="font-size:var(--text-lg);">🔀</div>
+            <span>决定</span>
+          </div>
+        </div>
+        <div class="flow-packet"></div>
+        <div class="flow-step-label">点击"下一步"来逐步走过循环的一次迭代</div>
+        <div class="flow-controls">
+          <button class="btn btn-primary flow-next-btn">下一步</button>
+          <button class="btn flow-reset-btn">重置</button>
+          <span class="flow-progress">第 0 步 / 共 6 步</span>
+        </div>
+      </div>
+
+      <div class="callout callout-accent animate-in" style="margin-top:var(--space-6)">
+        <span class="callout-icon">🔑</span>
+        <div>
+          <span class="callout-title">智能体 vs. 聊天机器人</span>
+          <p>这种"决策-行动-观察"的循环正是<strong>智能体</strong>区别于简单聊天机器人的关键。聊天机器人给出一个回答就停了。而智能体会持续运转——做决策、执行操作、评估结果——直到任务完成。这就是为什么 Claude Code 能够处理像"重构这个模块并更新所有测试"这样复杂的多步任务。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 4 — 当上下文太大时——压缩
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">当上下文太大时——压缩</h3>
+
+      <p>对话中的每条消息都会占用 <span class="term" data-definition="AI 模型处理的最小文本单位。大约相当于英文中 3/4 个单词。所有内容——你的消息、Claude 的响应、文件内容、工具结果——都以 token 为单位计量。模型有一个固定的 token 预算，叫做上下文窗口。">token</span>——AI 的记忆单位。<span class="term" data-definition="AI 模型一次性能够容纳在工作记忆中的文本量（以 token 为单位）。可以把它想象成内存——有一个固定上限，所有内容（系统提示词、对话历史、工具结果）都必须装在里面。">上下文窗口</span>能容纳的 token 数量有硬性限制，而较长的编码会话会很快把它填满。想象你在一个只有 200 页的笔记本上写小说——最终会用光空间。</p>
+
+      <p>当这种情况发生时，Claude Code 会做一件聪明的事：它自动<strong>摘要</strong>对话中较早的部分以释放空间，就像把详细的会议记录浓缩成要点，这样你就有空间继续记录了。</p>
+
+      <div class="pattern-cards stagger-children" style="margin-top:var(--space-8)">
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">🗜️</div>
+          <div class="pattern-title">自动压缩</div>
+          <p class="pattern-desc">当 token 使用量超过阈值（上下文窗口的一定百分比）时，自动摘要较早的消息。这是主动式的——它在你撞墙之前就发生了，就像助手在你桌子溢出之前就帮你整理好了。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">⚡</div>
+          <div class="pattern-title">被动压缩</div>
+          <p class="pattern-desc">当 API 因为请求太长而拒绝时，紧急压缩对话并重试。这是安全网——它捕获自动压缩遗漏的情况，防止系统崩溃。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">✂️</div>
+          <div class="pattern-title">裁剪压缩</div>
+          <p class="pattern-desc">裁掉对话的中间部分，保留开头（初始设置和系统上下文）和结尾（最近的消息）。就像重新翻阅一本书的第一章和最后一章，回忆起前提和你读到哪里了。</p>
+        </div>
+      </div>
+
+      <!-- 可视化: 压缩前后对比 -->
+      <div class="translation-block animate-in" style="margin-top:var(--space-8)">
+        <div class="translation-code" style="font-family:var(--font-body);font-size:var(--text-sm);line-height:1.8;">
+          <span class="translation-label">压缩前</span>
+          <div style="margin-top:var(--space-6)">
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#CBA6F7;">👤 你：</span> <span style="color:#CDD6F4;">"修复认证 bug"</span>
+            </div>
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#89B4FA;">🤖 Claude：</span> <span style="color:#CDD6F4;">"让我看看 auth.ts…"</span>
+            </div>
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#A6E3A1;">🔧 工具：</span> <span style="color:#CDD6F4;">read_file → （500 行代码）</span>
+            </div>
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#89B4FA;">🤖 Claude：</span> <span style="color:#CDD6F4;">"我发现第 42 行有问题…"</span>
+            </div>
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#A6E3A1;">🔧 工具：</span> <span style="color:#CDD6F4;">edit_file → （已应用补丁）</span>
+            </div>
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#89B4FA;">🤖 Claude：</span> <span style="color:#CDD6F4;">"现在让我跑一下测试…"</span>
+            </div>
+            <div style="padding:var(--space-2) 0;border-bottom:1px solid rgba(255,255,255,0.1);">
+              <span style="color:#A6E3A1;">🔧 工具：</span> <span style="color:#CDD6F4;">bash → （完整测试输出）</span>
+            </div>
+            <div style="padding:var(--space-2) 0;">
+              <span style="color:#FAB387;">已使用约 8,000 token</span>
+            </div>
+          </div>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">压缩后</span>
+          <div class="translation-lines">
+            <div class="tl" style="padding:var(--space-3) 0;">
+              <strong>📋 摘要：</strong>用户请求修复认证 bug。Claude 读取了 auth.ts，发现第 42 行有空值检查问题，应用了修复，运行了测试——全部通过。
+            </div>
+            <div class="tl" style="padding:var(--space-3) 0;color:var(--color-success);">
+              <strong>已使用约 800 token</strong>——减少了 90%！还有充裕空间进行更多回合。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-info animate-in" style="margin-top:var(--space-6)">
+        <span class="callout-icon">💡</span>
+        <div>
+          <span class="callout-title">取舍之道</span>
+          <p>压缩节省了空间，但会丢失细节。压缩之后，Claude 可能不记得会话早期的确切行号或变量名——只留下高层摘要。这就是为什么很长的编码会话有时会让你觉得 Claude "忘了"它之前做过什么。它并没有崩溃，只是把那些记忆压缩掉了。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 5 — 检验你的理解
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">检验你的理解</h3>
+
+      <div class="quiz-container animate-in" id="quiz-module3">
+
+        <!-- Q1 — 场景题 -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="压缩会摘要较早的消息，这可能丢失具体细节，比如行号、变量名或确切的修改顺序。Claude 并没有崩溃——它压缩了记忆来为更多工作腾出空间。"
+             data-explanation-wrong="这是压缩的经典副作用。当对话变得太长时，较早的消息会被摘要以释放 token。摘要保留了要点，但会丢失具体细节——这就是为什么 Claude 看起来似乎忘记了之前的修改。">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">场景</span>
+              <p>Claude Code 正在处理一个大型重构任务。在编辑了 20 个文件之后，它突然似乎"忘记了"之前的修改，开始建议与自己之前工作冲突的编辑。</p>
+            </div>
+          </div>
+          <div class="quiz-question">最可能发生了什么？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>代码中的 bug</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>对话太长被压缩了，丢失了一些细节</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>Claude 的 API 挂了</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>REPL 崩溃了</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="异步生成器让函数可以增量地产出值——把每个文本片段、工具调用或状态更新实时发送到界面。你能看到文字逐步出现，而不是盯着空白屏幕等待完整答案。"
+             data-explanation-wrong="异步生成器的设计完全是为了实时流式传输。它让 query() 能逐个发送事件，这样界面就能立即显示部分响应。没有它的话，你就得等 Claude 完成整个响应（包括所有工具调用）之后才能看到任何内容。">
+          <div class="quiz-question"><code>query</code> 函数是一个"异步生成器"。为什么这种设计对用户体验很重要？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它让代码更短</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它让 Claude Code 能实时流式传输部分响应，而不用让你等待</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它能防止 bug</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>这是 TypeScript 的要求</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quiz-question-block" data-correct="c"
+             data-explanation-right="只要 Claude 继续请求工具，循环就会继续运行。当 Claude 返回一个纯文本响应（没有工具调用）——意味着它完成了——或者当安全限制被触发（最大回合数或最大 token 数）时，循环就会停止。没有固定的超时时间。"
+             data-explanation-wrong="循环不使用计时器。只要 Claude 请求执行工具，它就会持续运行。当 Claude 返回一个不包含任何工具调用的响应（即它已完成工作），或者当回合限制或 token 限制被触发时，循环才会终止。">
+          <div class="quiz-question">是什么阻止了对话循环永远运行下去？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>60 秒超时</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>用户按 Ctrl+C</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>Claude 返回一个没有工具调用的响应，或者回合/token 限制被触发</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>终端自动关闭</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div style="display:flex;gap:var(--space-3);margin-top:var(--space-6)">
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">检查答案</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">重置</button>
+        </div>
+
+      </div><!-- /quiz-container -->
+    </div><!-- /screen 5 -->
+
+    <!-- ── TAKEAWAY ──────────────────────────────────────────── -->
+    <div class="callout callout-info animate-in" style="margin-top:var(--space-4);margin-bottom:var(--space-8)">
+      <span class="callout-icon">🎯</span>
+      <div>
+        <span class="callout-title">核心要点</span>
+        <p><code>query.ts</code> 中的对话循环是将 Claude 从一个一次性聊天机器人转变为持久的多步智能体的引擎。它调用 API、执行工具、循环往复——同时管理状态、压缩和恢复。理解这个循环能帮助你预测 Claude Code 在长会话中的行为，以及它为什么有时需要"遗忘"才能继续前进。</p>
+      </div>
+    </div>
+
+  </div><!-- /module-content -->
+</section>

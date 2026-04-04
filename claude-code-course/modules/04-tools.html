@@ -1,0 +1,393 @@
+<!-- ════════════════════════════════════════════════════════════
+     MODULE 4 — The Tool System
+     ════════════════════════════════════════════════════════════ -->
+<section class="module" id="module-4" style="background:var(--color-bg)">
+  <div class="module-content">
+
+    <!-- ── MODULE HEADER ─────────────────────────────────────── -->
+    <header class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h2 class="module-title">工具系统</h2>
+      <p class="module-subtitle">想象一间医院的手术室——外科医生说「手术刀」，护士先检查授权单，拿出正确的器械，安全地递过去。日常检查时，多位护士可以同时工作；做手术时，一次只能一位护士操作。</p>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 1 — What Are Tools?
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">什么是工具？</h3>
+
+      <p>Claude 不只会思考——它还能<em>行动</em>。当它决定读取文件、编辑代码或运行终端命令时，工具系统就是让这一切发生的核心机制。那么，工具到底是什么呢？</p>
+
+      <p>你可以把工具想象成一份 Claude 可以选择的「能力菜单」。每个工具都有一个名称（比如 <code>ReadFile</code>）、一段描述（让 Claude 知道什么时候该用它）、一个输入<span class="term" data-definition="一份描述数据结构的蓝图——包含哪些字段、每个字段是什么类型、哪些是必填的。Claude 通过 Schema 来了解每个工具需要什么参数。">Schema</span>（需要哪些参数），以及一个执行函数（它在你的机器上实际做什么）。Claude 阅读菜单，选择合适的工具，填入参数，然后工具系统替它执行操作。</p>
+
+      <div class="pattern-cards stagger-children" style="margin-top:var(--space-8)">
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">📖</div>
+          <div class="pattern-title">读取工具</div>
+          <p class="pattern-desc">读取文件、搜索代码库、列出目录。安全且快速——多个读取工具可以同时运行，互不冲突。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">✏️</div>
+          <div class="pattern-title">写入工具</div>
+          <p class="pattern-desc">编辑文件、创建文件、删除文件。需要<span class="term" data-definition="执行某个操作的授权。在 Claude Code 中，权限系统控制着 AI 可以在你的电脑上做什么——它必须先征得你的同意才能进行更改。">权限</span>，且一次只运行一个，防止出错。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">⚡</div>
+          <div class="pattern-title">Shell 工具</div>
+          <p class="pattern-desc">运行终端命令，比如 <code>npm install</code>、<code>git commit</code> 或 <code>python test.py</code>。功能强大但有潜在风险——始终需要权限才能执行。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">🔌</div>
+          <div class="pattern-title"><span class="term" data-definition="模型上下文协议（Model Context Protocol）——一种让 AI 工具通过统一接口连接外部服务和数据源的标准。你可以把它想象成 AI 的 USB 接口：一个标准插头就能连接各种不同的设备。">MCP</span> 工具</div>
+          <p class="pattern-desc">通过模型上下文协议连接外部服务——数据库、API、云服务等——全部通过标准化接口实现。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">🤖</div>
+          <div class="pattern-title">Agent 工具</div>
+          <p class="pattern-desc">创建<span class="term" data-definition="一个更小的、专门化的 AI 工作者，主 Agent 可以创建它来独立处理特定任务。就像把一个子任务委派给同事，你继续做主要的工作。">子 Agent</span> 来处理复杂的<span class="term" data-definition="同时运行多个操作。与串行（一个接一个）相反。就像多个人同时处理不同的任务。">并行</span>任务——就像主刀医生把一个子手术委托给专科医生。</p>
+        </div>
+      </div>
+
+      <div class="callout callout-accent animate-in" style="margin-top:var(--space-8)">
+        <span class="callout-icon">🏥</span>
+        <div>
+          <span class="callout-title">手术室的比喻</span>
+          <p>把 Claude 想象成做决策的外科医生。工具系统就是护士团队：当医生要求一件器械时，护士会检查授权单（权限），选出正确的器械（找到工具），确认拿对了（检查 <span class="term" data-definition="一份描述数据结构的蓝图——包含哪些字段、每个字段是什么类型、哪些是必填的。Claude 通过 Schema 来了解每个工具需要什么参数。">Schema</span>），然后递过去。像查看病历这种常规操作，多位护士可以同时进行。而做手术——编辑文件、运行命令——一次只能一位护士操作，防止出错。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 2 — Read Fast, Write Carefully
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">读取要快，写入要稳</h3>
+
+      <p>这是让 Claude Code 既快速<em>又</em>安全的关键洞察：并非所有工具生来平等。读取文件不可能破坏任何东西——那为什么不同时读十个文件呢？但写入文件就不同了，如果两个写入操作碰撞，可能会造成损害。<span class="term" data-definition="按正确顺序协调多个操作的过程，就像指挥家指挥乐团。在 Claude Code 中，调度意味着决定哪些工具一起运行、哪些单独运行。">调度</span>层通过一个巧妙的<span class="term" data-definition="一组打包在一起作为一个单元处理的操作。只读工具被批量打包以提高速度；写入工具各自独立成批以确保安全。">批处理</span>策略解决了这个问题。</p>
+
+      <p>下面这个函数接收 Claude 想要发起的工具调用列表，并将它们分组成批次。<span class="term" data-definition="同时运行多个操作，执行时间重叠。就像多个人同时做不同的任务——更快，但只有在任务之间互不干扰时才安全。">并发</span>安全的工具被分到一组；不安全的工具各自独占一个批次，<span class="term" data-definition="一个接一个地运行操作，等每个完成后再开始下一个。比并行慢，但在操作可能互相干扰时可以防止冲突。">串行</span>执行（一次一个）。</p>
+
+      <!-- CODE ↔ ENGLISH TRANSLATION -->
+      <div class="translation-block animate-in" style="margin-top:var(--space-8)">
+        <div class="translation-code">
+          <span class="translation-label">toolOrchestration.ts</span>
+<code><span class="code-line"><span class="code-keyword">function</span> <span class="code-function">partitionToolCalls</span>(</span>
+<span class="code-line">  toolUseMessages: <span class="code-tag">ToolUseBlock</span>[],</span>
+<span class="code-line">  toolUseContext: <span class="code-tag">ToolUseContext</span>,</span>
+<span class="code-line">): <span class="code-tag">Batch</span>[] {</span>
+<span class="code-line">  <span class="code-keyword">return</span> toolUseMessages.<span class="code-function">reduce</span>((acc: <span class="code-tag">Batch</span>[], toolUse) <span class="code-operator">=&gt;</span> {</span>
+<span class="code-line">    <span class="code-keyword">const</span> tool <span class="code-operator">=</span> <span class="code-function">findToolByName</span>(</span>
+<span class="code-line">      toolUseContext.options.tools, toolUse.name)</span>
+<span class="code-line">    <span class="code-keyword">const</span> parsedInput <span class="code-operator">=</span></span>
+<span class="code-line">      tool<span class="code-operator">?.</span>inputSchema.<span class="code-function">safeParse</span>(toolUse.input)</span>
+<span class="code-line">    <span class="code-keyword">const</span> isConcurrencySafe <span class="code-operator">=</span></span>
+<span class="code-line">      parsedInput<span class="code-operator">?.</span>success</span>
+<span class="code-line">      <span class="code-operator">?</span> (() <span class="code-operator">=&gt;</span> {</span>
+<span class="code-line">          <span class="code-keyword">try</span> {</span>
+<span class="code-line">            <span class="code-keyword">return</span> <span class="code-function">Boolean</span>(</span>
+<span class="code-line">              tool<span class="code-operator">?.</span><span class="code-function">isConcurrencySafe</span>(parsedInput.data))</span>
+<span class="code-line">          } <span class="code-keyword">catch</span> {</span>
+<span class="code-line">            <span class="code-keyword">return</span> <span class="code-value">false</span></span>
+<span class="code-line">          }</span>
+<span class="code-line">        })()</span>
+<span class="code-line">      <span class="code-operator">:</span> <span class="code-value">false</span></span>
+<span class="code-line">    <span class="code-keyword">if</span> (isConcurrencySafe <span class="code-operator">&amp;&amp;</span></span>
+<span class="code-line">        acc[acc.length <span class="code-operator">-</span> <span class="code-number">1</span>]<span class="code-operator">?.</span>isConcurrencySafe) {</span>
+<span class="code-line">      acc[acc.length <span class="code-operator">-</span> <span class="code-number">1</span>]<span class="code-operator">!</span>.blocks.<span class="code-function">push</span>(toolUse)</span>
+<span class="code-line">    } <span class="code-keyword">else</span> {</span>
+<span class="code-line">      acc.<span class="code-function">push</span>({</span>
+<span class="code-line">        isConcurrencySafe, blocks: [toolUse] })</span>
+<span class="code-line">    }</span>
+<span class="code-line">    <span class="code-keyword">return</span> acc</span>
+<span class="code-line">  }, [])</span>
+<span class="code-line">}</span></code>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">通俗解读</span>
+          <div class="translation-lines">
+            <div class="tl"><strong>接收一个工具调用列表</strong>，也就是 Claude 想要执行的操作，然后把它们分组成批次。</div>
+            <div class="tl"><strong>对每个工具调用，</strong>查找工具定义并验证其输入参数。这就是所谓的<span class="term" data-definition="分析和验证输入数据，确保它符合预期格式后再处理。就像护士在递器械给医生之前，先仔细确认拿对了。">解析</span>——确保参数与工具期望的格式匹配。</div>
+            <div class="tl"><strong>询问工具：</strong>「和其他工具一起运行安全吗？」只读工具说安全；写入工具说不安全。</div>
+            <div class="tl"><strong>如果这个工具是安全的</strong>，而且上一个批次也是安全的，就把它加入那个批次（归到一组并行执行）。</div>
+            <div class="tl"><strong>如果这个工具不安全，</strong>就开启一个新批次，只放这一个工具（它要单独运行）。</div>
+            <div class="tl"><strong>最终结果：</strong>连续的只读工具被打包到一起同时执行。写入工具始终独占一个批次，一次只运行一个。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISUAL: Batching diagram -->
+      <div class="step-cards stagger-children" style="margin-top:var(--space-8)">
+        <div class="step-card animate-in" style="border-left-color:var(--color-success);">
+          <span class="step-num" style="background:var(--color-success);">⚡</span>
+          <div class="step-body">
+            <strong>批次 1 —— 并行（快速）</strong>
+            <p><code>ReadFile("auth.ts")</code> + <code>ReadFile("utils.ts")</code> + <code>SearchFiles("login")</code> —— 全部同时运行！</p>
+          </div>
+        </div>
+        <div class="step-card animate-in" style="border-left-color:var(--color-error);">
+          <span class="step-num" style="background:var(--color-error);">🔒</span>
+          <div class="step-body">
+            <strong>批次 2 —— 串行（安全）</strong>
+            <p><code>EditFile("auth.ts")</code> —— 在批次 1 完成后单独运行。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in" style="border-left-color:var(--color-success);">
+          <span class="step-num" style="background:var(--color-success);">⚡</span>
+          <div class="step-body">
+            <strong>批次 3 —— 并行（快速）</strong>
+            <p><code>ReadFile("auth.ts")</code> + <code>ReadFile("config.ts")</code> —— 并行验证更改结果。</p>
+          </div>
+        </div>
+      </div>
+
+      <p style="margin-top:var(--space-4);color:var(--color-text-secondary);font-size:var(--text-sm);">这就是 Claude Code 代码库中真实的批处理函数。设计模式非常优雅：安全的工具被分组同时运行以提高速度，不安全的工具被隔离逐个运行以确保安全。没有锁、没有竞态条件——只有巧妙的调度策略。</p>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 3 — The Permission Gate
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">权限关卡</h3>
+
+      <p>在任何工具执行之前，它都必须通过权限关卡。这是 Claude Code 的安全网——防止 AI 在未经你同意的情况下删除你的文件、推送到 git 或运行危险命令的系统。</p>
+
+      <p>权限系统将其配置存储在一个上下文对象中。把它想象成医院的授权政策——一套规则，决定哪些操作可以自动进行，哪些需要患者（也就是你）的明确批准。</p>
+
+      <!-- CODE ↔ ENGLISH TRANSLATION -->
+      <div class="translation-block animate-in" style="margin-top:var(--space-8)">
+        <div class="translation-code">
+          <span class="translation-label">Tool.ts</span>
+<code><span class="code-line"><span class="code-keyword">export type</span> <span class="code-tag">ToolPermissionContext</span> <span class="code-operator">=</span></span>
+<span class="code-line">  <span class="code-tag">DeepImmutable</span>&lt;{</span>
+<span class="code-line">  <span class="code-property">mode</span>: <span class="code-tag">PermissionMode</span></span>
+<span class="code-line">  <span class="code-property">additionalWorkingDirectories</span>:</span>
+<span class="code-line">    <span class="code-tag">Map</span>&lt;<span class="code-tag">string</span>, <span class="code-tag">AdditionalWorkingDirectory</span>&gt;</span>
+<span class="code-line">  <span class="code-property">alwaysAllowRules</span>:</span>
+<span class="code-line">    <span class="code-tag">ToolPermissionRulesBySource</span></span>
+<span class="code-line">  <span class="code-property">alwaysDenyRules</span>:</span>
+<span class="code-line">    <span class="code-tag">ToolPermissionRulesBySource</span></span>
+<span class="code-line">  <span class="code-property">alwaysAskRules</span>:</span>
+<span class="code-line">    <span class="code-tag">ToolPermissionRulesBySource</span></span>
+<span class="code-line">  <span class="code-property">isBypassPermissionsModeAvailable</span>:</span>
+<span class="code-line">    <span class="code-keyword">boolean</span></span>
+<span class="code-line">  <span class="code-property">shouldAvoidPermissionPrompts</span><span class="code-operator">?</span>:</span>
+<span class="code-line">    <span class="code-keyword">boolean</span></span>
+<span class="code-line">&gt;}</span></code>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">通俗解读</span>
+          <div class="translation-lines">
+            <div class="tl"><strong>mode：</strong>当前的权限级别——「default」（危险操作每次都要询问）、「plan」（只读模式）或「bypass」（自动批准所有操作）。</div>
+            <div class="tl"><strong>additionalWorkingDirectories：</strong>除主项目目录外，Claude 被允许访问的额外文件夹。</div>
+            <div class="tl"><strong>alwaysAllowRules：</strong>一份<span class="term" data-definition="一个明确允许的项目列表。白名单上的内容会被自动批准，无需询问。在 Claude Code 中，你可以将特定工具或命令加入白名单，跳过权限对话框。">白名单</span>——匹配这些规则的工具会被自动批准，无需询问你。</div>
+            <div class="tl"><strong>alwaysDenyRules：</strong>一份<span class="term" data-definition="一个明确禁止的项目列表。黑名单上的内容会被自动拒绝，无论如何。用它来阻止 Claude 运行你绝对不想让它碰的特定命令。">黑名单</span>——匹配这些规则的工具会被自动拦截，无论如何。</div>
+            <div class="tl"><strong>alwaysAskRules：</strong>无论其他设置如何，始终需要人工明确批准的工具。</div>
+            <div class="tl"><strong>isBypassPermissionsModeAvailable：</strong>用户是否启用了「信任一切」模式（即 <code>--dangerously-skip-permissions</code> 标志）。</div>
+            <div class="tl"><strong>shouldAvoidPermissionPrompts：</strong>针对没有 UI 来显示权限对话框的后台 Agent——它们会完全跳过交互式提示。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-warning animate-in" style="margin-top:var(--space-8)">
+        <span class="callout-icon">🛡️</span>
+        <div>
+          <span class="callout-title">为什么这很重要</span>
+          <p>这套权限系统是 Claude Code 的安全网。它确保 AI 永远不会在未经你同意的情况下删除你的文件、推送到 git 或运行危险命令。当你构建 AI 驱动的工具时，一定要像这样构建权限关卡——这就是「好用的助手」和「定时炸弹」之间的区别。白名单/黑名单/始终询问这三者的组合，让你可以精细地控制 AI 能做什么、不能做什么。</p>
+        </div>
+      </div>
+
+      <!-- VISUAL: Permission flow -->
+      <div class="step-cards stagger-children" style="margin-top:var(--space-6)">
+        <div class="step-card animate-in">
+          <span class="step-num">1</span>
+          <div class="step-body">
+            <strong>工具调用到达</strong>
+            <p>Claude 说「我想运行 <code>rm -rf node_modules</code>」</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">2</span>
+          <div class="step-body">
+            <strong>检查黑名单</strong>
+            <p>这个命令是否被明确禁止？如果是 → <strong style="color:var(--color-error);">立即拒绝</strong>。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">3</span>
+          <div class="step-body">
+            <strong>检查白名单</strong>
+            <p>这个命令是否已预先批准？如果是 → <strong style="color:var(--color-success);">自动通过</strong>。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in">
+          <span class="step-num">4</span>
+          <div class="step-body">
+            <strong>询问用户</strong>
+            <p>都没匹配到？弹出权限对话框，等待你的批准或拒绝。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 4 — Tools in Action
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">工具实战演示</h3>
+
+      <p>让我们看看完整的调度流程是怎么运作的。Claude 想要读取两个文件，然后编辑其中一个。看看调度器是如何把工作分成批次的——读取操作并行执行，然后写入操作单独执行。</p>
+
+      <div class="flow-animation animate-in" id="flow-tool-execution"
+        data-steps='[{"highlight":"flow-actor-1","label":"Claude 回应：我需要读取 auth.ts、读取 utils.ts，然后编辑 auth.ts"},{"packet":true,"from":"actor-1","to":"actor-2","label":"三个工具调用到达调度器"},{"highlight":"flow-actor-2","label":"调度器分组：读取工具归为一批（安全）。编辑工具单独一批（不安全）。"},{"highlight":"flow-actor-3","label":"批次 1：两个读取工具并行运行——快！"},{"packet":true,"from":"actor-3","to":"actor-2","label":"读取结果返回给调度器"},{"highlight":"flow-actor-2","label":"批次 1 完成。现在串行处理批次 2。"},{"highlight":"flow-actor-4","label":"批次 2：编辑工具单独运行——安全！"},{"packet":true,"from":"actor-4","to":"actor-2","label":"写入结果返回给调度器"},{"packet":true,"from":"actor-2","to":"actor-1","label":"所有工具结果发送回 Claude，进入下一轮"}]'>
+
+        <div class="flow-actors">
+          <div class="flow-actor" id="flow-actor-1">
+            <div class="flow-actor-icon" style="background:#FDEEE9;border-color:#D94F30;color:#D94F30;">🧠</div>
+            <span>Claude</span>
+          </div>
+          <div class="flow-actor" id="flow-actor-2">
+            <div class="flow-actor-icon" style="background:#E4F2F7;border-color:#2A7B9B;color:#2A7B9B;">🎛️</div>
+            <span>调度器</span>
+          </div>
+          <div class="flow-actor" id="flow-actor-3">
+            <div class="flow-actor-icon" style="background:#F3EAF8;border-color:#7B6DAA;color:#7B6DAA;">📖</div>
+            <span>读取工具</span>
+          </div>
+          <div class="flow-actor" id="flow-actor-4">
+            <div class="flow-actor-icon" style="background:#FDF5E6;border-color:#D4A843;color:#D4A843;">✏️</div>
+            <span>写入工具</span>
+          </div>
+        </div>
+
+        <div class="flow-packet"></div>
+
+        <div class="flow-step-label">点击「下一步」开始</div>
+
+        <div class="flow-controls">
+          <button class="btn flow-next-btn">下一步</button>
+          <button class="btn flow-reset-btn">重新开始</button>
+          <span class="flow-progress"></span>
+        </div>
+      </div>
+
+      <div class="callout callout-info animate-in" style="margin-top:var(--space-6)">
+        <span class="callout-icon">💡</span>
+        <div>
+          <span class="callout-title">为什么不全部并行运行？</span>
+          <p>想象一下两个写入工具同时运行——一个在往文件里加一行，另一个在删另一行。它们可能会互相覆盖对方的更改，导致文件损坏。通过串行运行写入操作，调度器保证每次写入都能看到上一次写入的结果。读取操作可以安全地并行化，因为它们只是观察——从不更改任何东西。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 5 — Quiz
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">检验你的理解</h3>
+
+      <div class="quiz-container animate-in" id="quiz-module4">
+
+        <!-- Q1 — Scenario -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="只读工具被标记为并发安全的，所以调度器会把它们打包到一起同时执行。写入工具并行运行是不安全的（两个同时写入可能损坏数据），所以它们一次只运行一个，各自独占一个批次。快速的并行读取，然后较慢的串行写入——正是你观察到的现象。"
+             data-explanation-wrong="速度差异不是因为难度、API 限流或硬件原因。而是因为批处理策略：只读工具并行运行（同时执行），写入工具必须串行运行（一次一个）以防止冲突。这是调度器中刻意为之的安全设计。">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">场景</span>
+              <p>Claude 同时读取 10 个文件，感觉很快。然后它开始写入一个文件，一切都慢了下来。</p>
+            </div>
+          </div>
+          <div class="quiz-question">为什么速度会变化？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>写入对 AI 来说处理起来更难</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>读取工具并行运行，但写入工具一次只运行一个</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>API 对写入操作进行了限流</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>你的硬盘太慢了</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quiz-question-block" data-correct="c"
+             data-explanation-right="--dangerously-skip-permissions 标志（bypass 模式）会禁用权限关卡——也就是通常在 Claude 执行危险操作（如写入文件或运行 shell 命令）前征求你同意的检查机制。名称里包含「dangerously」（危险地）是有原因的！"
+             data-explanation-wrong="这个标志专门禁用的是权限系统——在工具执行前征求你批准的安全关卡。它不影响工具执行本身、API 认证或代码语法检查。使用这个标志后，所有工具都会直接运行，不再询问。">
+          <div class="quiz-question">你正在使用带有 <code>--dangerously-skip-permissions</code> 的 Claude Code。这会禁用什么？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>完全禁用工具执行</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>API 认证</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>每个工具运行前的权限检查</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>代码语法检查</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="在默认模式下，像删除文件这样的破坏性操作始终要通过权限关卡。Claude Code 会向你展示它想要做什么，然后等待你的明确批准。你可以拒绝该请求，确保文件安全。"
+             data-explanation-wrong="在默认权限模式下，Claude Code 在执行破坏性操作前始终会征求你的同意。它永远不会静默删除文件，当然也不会崩溃。权限对话框就是你的安全网——你始终拥有最终决定权。">
+          <div class="quiz-question">Claude 要求删除一个关键的系统文件。在「default」权限模式下，会发生什么？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它立即删除文件</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它弹出权限对话框，等待你的批准</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它静默跳过删除操作</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>它崩溃了</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div style="display:flex;gap:var(--space-3);margin-top:var(--space-6)">
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">检查答案</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">重置</button>
+        </div>
+
+      </div><!-- /quiz-container -->
+    </div><!-- /screen 5 -->
+
+    <!-- ── TAKEAWAY ──────────────────────────────────────────── -->
+    <div class="callout callout-info animate-in" style="margin-top:var(--space-4);margin-bottom:var(--space-8)">
+      <span class="callout-icon">🎯</span>
+      <div>
+        <span class="callout-title">核心要点</span>
+        <p>工具是 Claude 的智能与你的电脑之间的桥梁。巧妙之处不仅在于有<em>哪些</em>工具，更在于它们是<em>如何</em>被调度的——只读工具并行运行以提高速度，写入工具串行运行以确保安全，而每个危险操作都要通过权限关卡，由你做最终决定。这种设计让 Claude Code 能够同时做到<strong>快速</strong>（并行读取）和<strong>安全</strong>（受控写入）。</p>
+      </div>
+    </div>
+
+  </div><!-- /module-content -->
+</section>

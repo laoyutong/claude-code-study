@@ -1,0 +1,402 @@
+<!-- ════════════════════════════════════════════════════════════
+     MODULE 2 — Meet the Cast
+     ════════════════════════════════════════════════════════════ -->
+<section class="module" id="module-2" style="background:var(--color-bg)">
+  <div class="module-content">
+
+    <!-- ── MODULE HEADER ─────────────────────────────────────── -->
+    <header class="module-header animate-in">
+      <span class="module-number">02</span>
+      <h2 class="module-title">认识主角们</h2>
+      <p class="module-subtitle">想象一个电影剧组——导演、摄影师、演员、特技协调员和舞台监督。每个人都有明确的分工，大家齐心协力才能把戏演好。</p>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 1 — The Main Characters
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">主要角色</h3>
+
+      <p>现在你已经了解了一条提示词的旅程，接下来让我们认识一下幕后团队。Claude Code 并不是一大坨代码——它由几个各司其职的专业模块组成，每个模块负责一件事。你可以把它们想象成电影剧组的成员，每个人都是自己领域的专家。</p>
+
+      <p>下面是主要组件的群聊，它们会轮流自我介绍。点击 <strong>下一条</strong> 来听听每个组件怎么说：</p>
+
+      <!-- GROUP CHAT -->
+      <div class="chat-window animate-in" id="chat-module2">
+        <div class="chat-messages">
+
+          <!-- Message 1 — REPL -->
+          <div class="chat-message" data-sender="REPL" style="display:none">
+            <div class="chat-avatar" style="background:#2A7B9B">📺</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#2A7B9B">REPL</span>
+              <p>大家好！我是 <span class="term" data-definition="Read-Eval-Print Loop（读取-求值-输出 循环）——一种交互式环境，它读取你的输入、处理它、输出结果，然后循环等待下一次输入。Claude Code 的聊天界面就是一个 REPL。">REPL</span>——你输入 <code>claude</code> 后看到的终端界面。我负责处理你的输入、展示消息、管理提示框。你可以把我想象成摄影师——我把一切呈现给观众。</p>
+            </div>
+          </div>
+
+          <!-- Message 2 — QueryEngine -->
+          <div class="chat-message" data-sender="QueryEngine" style="display:none">
+            <div class="chat-avatar" style="background:#D94F30">🎬</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#D94F30">QueryEngine</span>
+              <p>我是 QueryEngine——导演。当用户发送提示词时，我负责协调整个流程。我决定何时调用 API、处理工具返回的结果，并管理对话历史。</p>
+            </div>
+          </div>
+
+          <!-- Message 3 — API Service -->
+          <div class="chat-message" data-sender="API" style="display:none">
+            <div class="chat-avatar" style="background:#7B6DAA">🌐</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#7B6DAA">API Service</span>
+              <p>我是 API 层——负责和云端的 Claude 大脑对话。我处理<span class="term" data-definition="一种技术，AI 的回复会一边生成一边逐块发送给用户，而不是等全部生成完毕再一次性返回。这让回复感觉更快。">流式</span>响应、管理身份认证、追踪 <span class="term" data-definition="AI 模型处理文本的最小单位——大约是一个词或词的片段。模型一次能处理的 token 数量有上限（即上下文窗口）。">token</span> 用量和费用。我就是那个登台表演的演员。</p>
+            </div>
+          </div>
+
+          <!-- Message 4 — Tool System -->
+          <div class="chat-message" data-sender="Tools" style="display:none">
+            <div class="chat-avatar" style="background:#D4A843">🔧</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#D4A843">Tool System</span>
+              <p>我是 Tool System——特技协调员。当 Claude 需要读取文件、编写代码或执行命令时，我负责安全地完成这些操作。我会检查<span class="term" data-definition="控制 Claude Code 能执行哪些操作的授权规则。某些操作（如写入文件）需要你的明确批准才能执行。">权限</span>并执行具体动作。</p>
+            </div>
+          </div>
+
+          <!-- Message 5 — init() -->
+          <div class="chat-message" data-sender="init" style="display:none">
+            <div class="chat-avatar" style="background:#2D8B55">🏗️</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#2D8B55">init()</span>
+              <p>我是 init()——舞台监督。在其他人开始工作之前，我负责加载配置、检查身份认证、初始化<span class="term" data-definition="收集匿名使用数据（如功能使用频率、错误率、性能指标等）的过程，帮助开发者改进软件。">遥测</span>，确保一切准备就绪。你永远看不到我，但没有我什么都跑不起来。</p>
+            </div>
+          </div>
+
+        </div><!-- /chat-messages -->
+
+        <!-- Typing indicator -->
+        <div class="chat-typing" style="display:none">
+          <div class="chat-avatar" id="chat-module2-typing-avatar" style="background:var(--color-text-muted);width:28px;height:28px;font-size:var(--text-xs);">?</div>
+          <div class="chat-typing-dots">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="chat-controls">
+          <button class="btn btn-primary chat-next-btn">下一条</button>
+          <button class="btn chat-all-btn">显示全部</button>
+          <button class="btn chat-reset-btn">重置</button>
+          <span class="chat-progress">0 / 5 条消息</span>
+        </div>
+      </div><!-- /chat-window -->
+    </div><!-- /screen 1 -->
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 2 — Where They Live
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">它们住在哪里</h3>
+
+      <p>每个角色在代码库中都有自己的"地址"。下面的<span class="term" data-definition="一种可视化展示项目目录中文件夹和文件组织方式的图形，显示父子嵌套关系——就像代码的家谱。">文件树</span>展示了每个角色的位置：</p>
+
+      <div class="file-tree animate-in" style="background:var(--color-surface);border-radius:var(--radius-lg);padding:var(--space-6);box-shadow:var(--shadow-md);">
+        <div class="ft-folder">
+          <span class="ft-name">src/</span>
+          <div class="ft-children">
+            <div class="ft-folder">
+              <span class="ft-name">screens/</span>
+              <div class="ft-children">
+                <div class="ft-file">
+                  <span class="ft-name" style="color:#2A7B9B;font-weight:600;">REPL.tsx</span>
+                  <span class="ft-desc">— 终端界面（5000+ 行代码！）</span>
+                </div>
+              </div>
+            </div>
+            <div class="ft-file">
+              <span class="ft-name" style="color:#D94F30;font-weight:600;">QueryEngine.ts</span>
+              <span class="ft-desc">— <span class="term" data-definition="用户与应用之间的一段持续交互。一个会话从你启动 Claude Code 开始，到你退出时结束。对话历史、设置和状态在会话期间保持不变。">会话</span>协调器</span>
+            </div>
+            <div class="ft-file">
+              <span class="ft-name" style="color:#D94F30;font-weight:600;">query.ts</span>
+              <span class="ft-desc">— 核心对话循环</span>
+            </div>
+            <div class="ft-folder">
+              <span class="ft-name">services/api/</span>
+              <div class="ft-children">
+                <div class="ft-file">
+                  <span class="ft-name" style="color:#7B6DAA;font-weight:600;">claude.ts</span>
+                  <span class="ft-desc">— 与 Claude API 通信</span>
+                </div>
+              </div>
+            </div>
+            <div class="ft-folder">
+              <span class="ft-name">services/tools/</span>
+              <div class="ft-children">
+                <div class="ft-file">
+                  <span class="ft-name" style="color:#D4A843;font-weight:600;">toolOrchestration.ts</span>
+                  <span class="ft-desc">— 运行工具（<span class="term" data-definition="将多个操作组合在一起作为一组运行，而不是逐个执行。批量运行只读工具意味着可以同时读取多个文件，提高性能。">批量</span>或串行）</span>
+                </div>
+                <div class="ft-file">
+                  <span class="ft-name" style="color:#D4A843;font-weight:600;">toolExecution.ts</span>
+                  <span class="ft-desc">— 执行单个工具</span>
+                </div>
+              </div>
+            </div>
+            <div class="ft-file">
+              <span class="ft-name" style="color:#D4A843;font-weight:600;">Tool.ts</span>
+              <span class="ft-desc">— 工具类型定义与注册表</span>
+            </div>
+            <div class="ft-folder">
+              <span class="ft-name">entrypoints/</span>
+              <div class="ft-children">
+                <div class="ft-file">
+                  <span class="ft-name" style="color:#2D8B55;font-weight:600;">init.ts</span>
+                  <span class="ft-desc">— 应用初始化</span>
+                </div>
+              </div>
+            </div>
+            <div class="ft-file">
+              <span class="ft-name">main.tsx</span>
+              <span class="ft-desc">— CLI 入口与 Commander 配置</span>
+            </div>
+            <div class="ft-file">
+              <span class="ft-name">replLauncher.tsx</span>
+              <span class="ft-desc">— 启动 React 终端应用</span>
+            </div>
+            <div class="ft-folder">
+              <span class="ft-name">components/</span>
+              <div class="ft-children">
+                <div class="ft-file">
+                  <span class="ft-name">App.tsx</span>
+                  <span class="ft-desc">— React 根组件包装器</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-info animate-in">
+        <span class="callout-icon">💡</span>
+        <div>
+          <span class="callout-title">为什么有这么多文件？</span>
+          <p>每个文件只做一件事。<code>QueryEngine.ts</code> 负责协调，但从不接触 UI。<code>REPL.tsx</code> 负责展示，但从不直接调用 API。这种分离意味着你可以修改一个部分而不影响其他部分——这和电影剧组分工的道理一样，各有专长总比一个人包揽一切要好。</p>
+        </div>
+      </div>
+    </div><!-- /screen 2 -->
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 3 — How They Work Together
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">它们如何协作</h3>
+
+      <p>知道角色是谁只是第一步，更重要的是看数据如何在它们之间流动。点击 <strong>下一步</strong> 来观察一条提示词在系统中的旅程：</p>
+
+      <div class="flow-animation animate-in"
+           data-steps='[{"highlight":"flow-actor-1","label":"你输入提示词并按下回车，REPL 捕获它。"},{"packet":true,"from":"actor-1","to":"actor-2","label":"REPL 将提示词发送给 QueryEngine，开始新的一轮对话。"},{"highlight":"flow-actor-2","label":"QueryEngine 构建完整请求：系统提示词 + 记忆 + 你的消息 + 可用工具。"},{"packet":true,"from":"actor-2","to":"actor-3","label":"QueryEngine 将完整请求发送给 Claude API。"},{"highlight":"flow-actor-3","label":"Claude API 以流式返回响应，可能同时包含文本和工具调用。"},{"packet":true,"from":"actor-3","to":"actor-2","label":"响应流式返回给 QueryEngine。"},{"highlight":"flow-actor-2","label":"QueryEngine 发现响应中包含工具调用，是时候执行它们了。"},{"packet":true,"from":"actor-2","to":"actor-4","label":"QueryEngine 将工具调用发送给 Tool System。"},{"highlight":"flow-actor-4","label":"Tool System 检查权限并执行每个工具（读文件、写文件、运行命令）。"},{"packet":true,"from":"actor-4","to":"actor-2","label":"工具执行结果返回，QueryEngine 将结果交给 Claude 进入下一轮。"}]'>
+
+        <!-- Actors row -->
+        <div class="flow-actors">
+          <div class="flow-actor" id="flow-actor-1">
+            <div class="flow-actor-icon" style="color:#2A7B9B;">📺</div>
+            <span>REPL</span>
+          </div>
+          <div class="flow-actor" id="flow-actor-2">
+            <div class="flow-actor-icon" style="color:#D94F30;">🎬</div>
+            <span>QueryEngine</span>
+          </div>
+          <div class="flow-actor" id="flow-actor-3">
+            <div class="flow-actor-icon" style="color:#7B6DAA;">🌐</div>
+            <span>API</span>
+          </div>
+          <div class="flow-actor" id="flow-actor-4">
+            <div class="flow-actor-icon" style="color:#D4A843;">🔧</div>
+            <span>Tools</span>
+          </div>
+        </div>
+
+        <!-- Animated packet -->
+        <div class="flow-packet"></div>
+
+        <!-- Step label -->
+        <div class="flow-step-label">点击「下一步」开始</div>
+
+        <!-- Controls -->
+        <div class="flow-controls">
+          <button class="btn btn-primary flow-next-btn">下一步</button>
+          <button class="btn flow-reset-btn">重置</button>
+          <span class="flow-progress">第 0 / 10 步</span>
+        </div>
+      </div>
+
+      <div class="callout callout-accent animate-in" style="margin-top:var(--space-8)">
+        <span class="callout-icon">🔁</span>
+        <div>
+          <span class="callout-title">循环中的循环</span>
+          <p>注意第 6–10 步形成了一个循环：Claude 返回响应，QueryEngine 检查是否有工具调用，Tool System 执行工具，结果返回给 QueryEngine，然后再次调用 Claude。在一次对话中，这个循环可能重复很多次——读取文件、编辑代码、运行测试——直到 Claude 收集到足够的信息给你一个最终答案。</p>
+        </div>
+      </div>
+    </div><!-- /screen 3 -->
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 4 — A Closer Look at Each Actor
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">近距离观察每个角色</h3>
+
+      <p>下面是每个主要组件的快速参考卡片。把它们记在心里——当出了问题时，知道该看<em>哪个</em>角色就是调试成功的 90%。</p>
+
+      <div class="pattern-cards stagger-children" style="margin-top:var(--space-6)">
+
+        <div class="pattern-card animate-in" style="border-top-color:#2A7B9B;">
+          <div class="pattern-icon" style="background:#E4F2F7;color:#2A7B9B;">📺</div>
+          <div class="pattern-title">REPL</div>
+          <p class="pattern-desc"><code>screens/REPL.tsx</code> — 终端界面。处理输入、展示消息、管理<span class="term" data-definition="控制 Claude Code 能执行哪些操作的授权规则。某些操作（如写入文件）需要你的明确批准才能执行。">权限</span>弹窗、键盘快捷键，甚至还有 <span class="term" data-definition="一种受 Vim 编辑器启发的文本编辑模式。它让高级用户可以用键盘快捷键代替方向键和鼠标来导航和编辑文本。">vim</span> 模式。超过 5000 行代码，是整个代码库中最大的文件。</p>
+        </div>
+
+        <div class="pattern-card animate-in" style="border-top-color:#D94F30;">
+          <div class="pattern-icon" style="background:#FDEEE9;color:#D94F30;">🎬</div>
+          <div class="pattern-title">QueryEngine</div>
+          <p class="pattern-desc"><code>QueryEngine.ts</code> — 会话协调器。管理对话历史、调用查询循环、追踪用量和费用、记录日志，并处理记忆加载。</p>
+        </div>
+
+        <div class="pattern-card animate-in" style="border-top-color:#D94F30;">
+          <div class="pattern-icon" style="background:#FDEEE9;color:#D94F30;">🔄</div>
+          <div class="pattern-title">query()</div>
+          <p class="pattern-desc"><code>query.ts</code> — 内层对话循环。构建 API 请求、处理流式响应、在上下文过长时执行<span class="term" data-definition="当上下文窗口快满时，对对话中较早的部分进行摘要压缩的过程。这样可以为新消息腾出空间，同时保留之前发生的关键信息。">压缩</span>，并协调每轮对话中的工具执行。</p>
+        </div>
+
+        <div class="pattern-card animate-in" style="border-top-color:#7B6DAA;">
+          <div class="pattern-icon" style="background:#F3EAF8;color:#7B6DAA;">🌐</div>
+          <div class="pattern-title">API Service</div>
+          <p class="pattern-desc"><code>services/api/claude.ts</code> — 处理与 Claude 的所有通信。管理流式传输、重试机制、身份认证、模型选择和用量追踪。</p>
+        </div>
+
+        <div class="pattern-card animate-in" style="border-top-color:#D4A843;">
+          <div class="pattern-icon" style="background:#FDF5E0;color:#D4A843;">🔧</div>
+          <div class="pattern-title">Tool System</div>
+          <p class="pattern-desc"><code>services/tools/</code> — 执行 Claude 请求的操作。足够聪明，能把只读工具<span class="term" data-definition="同时运行多个操作，而不是逐个顺序执行。这样更快，但只有在操作之间互不干扰时才安全——比如同时读取多个文件。">并行</span>执行以提高效率，同时让写入操作逐一执行以确保安全。</p>
+        </div>
+
+        <div class="pattern-card animate-in" style="border-top-color:#2D8B55;">
+          <div class="pattern-icon" style="background:#E8F5EE;color:#2D8B55;">🏗️</div>
+          <div class="pattern-title">init()</div>
+          <p class="pattern-desc"><code>entrypoints/init.ts</code> — 在应用启动前完成所有准备工作。配置校验、身份认证、<span class="term" data-definition="位于你的计算机和互联网之间的中间服务器。代理可以转发、过滤或修改网络请求——在企业环境或需要隐私保护的场景中很有用。">代理</span>设置、遥测初始化，以及优雅关闭的处理。</p>
+        </div>
+
+      </div><!-- /pattern-cards -->
+    </div><!-- /screen 4 -->
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 5 — Quiz
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">检验你的理解</h3>
+
+      <div class="quiz-container animate-in" id="quiz-module2">
+
+        <!-- Q1 — Scenario -->
+        <div class="quiz-question-block" data-correct="d"
+             data-explanation-right="Tool System 负责执行文件修改。如果 Claude 理解了你的请求并告诉 Tool System 去编辑文件，但什么都没发生，那问题就出在工具执行上——可能是权限、文件路径或工具运行器本身的问题。"
+             data-explanation-wrong="Claude 理解了你的请求说明 API 和 QueryEngine 工作正常。REPL 只是负责显示输出。Tool System 才是真正对你的文件进行修改的角色——所以应该从那里排查。">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">场景</span>
+              <p>Claude Code 似乎理解了你的请求，但实际上并没有对你的文件做出任何修改。</p>
+            </div>
+          </div>
+          <div class="quiz-question">哪个角色最有可能出了问题？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>REPL</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>QueryEngine</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>API Service</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>Tool System</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="query.ts 包含内层对话循环，它决定是继续调用 Claude（因为还有工具结果需要处理）还是停下来把最终答案展示给你。它是每轮对话的心跳。"
+             data-explanation-wrong="REPL.tsx 负责界面，claude.ts 负责 API 通信，init.ts 负责启动。控制对话循环的文件——决定何时继续向 AI 提问、何时停止——是 query.ts。">
+          <div class="quiz-question">你想了解 Claude Code 是如何决定何时停止向 AI 提问并把最终答案展示给你的。你应该看哪个文件？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>REPL.tsx</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>query.ts</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>claude.ts</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>init.ts</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quiz-question-block" data-correct="c"
+             data-explanation-right="读取文件不会改变任何内容，所以并行读取既快速又安全。但如果两个写入操作同时运行——比如同时编辑同一个文件——它们可能会互相覆盖，导致数据损坏。逐一执行写入操作可以避免冲突。"
+             data-explanation-wrong="这和代码整洁度、费用或 API 要求无关。真正的原因是安全性：读取是无害的操作，所以同时执行多个读取（并行）只会节省时间。但写入会修改文件，对同一个文件的并行写入可能会冲突并损坏你的代码。">
+          <div class="quiz-question">为什么 Claude Code 让只读工具并行运行、而写入工具逐一执行很重要？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>这样代码更整洁</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>读取免费但写入要收费</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>并行读取既快速又安全，但并行写入可能导致冲突</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>API 要求必须这样做</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div style="display:flex;gap:var(--space-3);margin-top:var(--space-6)">
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module2')">检查答案</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module2')">重置</button>
+        </div>
+
+      </div><!-- /quiz-container -->
+    </div><!-- /screen 5 -->
+
+    <!-- ── SEPARATION OF CONCERNS CALLOUT ────────────────────── -->
+    <div class="callout callout-info animate-in" style="margin-top:var(--space-4);margin-bottom:var(--space-8)">
+      <span class="callout-icon">🎯</span>
+      <div>
+        <span class="callout-title">专业术语：关注点分离</span>
+        <p>这种模式——把一个大系统拆分成职责清晰的角色——叫做<strong>关注点分离</strong>（Separation of Concerns）。它是软件架构中最重要的原则。当你和 AI 编程工具对话时，可以这样说：<em>"把 API 逻辑放在服务层，别放在 UI 组件里"</em>——听起来就很专业。</p>
+      </div>
+    </div>
+
+  </div><!-- /module-content -->
+</section>

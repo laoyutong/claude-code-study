@@ -1,0 +1,561 @@
+<!-- ════════════════════════════════════════════════════════════
+     MODULE 6 — The Big Picture
+     ════════════════════════════════════════════════════════════ -->
+<section class="module" id="module-6" style="background:var(--color-bg)">
+  <div class="module-content">
+
+    <!-- ── MODULE HEADER ─────────────────────────────────────── -->
+    <header class="module-header animate-in">
+      <span class="module-number">06</span>
+      <h2 class="module-title">全景总览</h2>
+      <p class="module-subtitle">就像走遍了每个街区之后，终于拿到了一张完整的城市地图。你已经探索了公园、交通系统、政府机构和电力网络。现在让我们退后一步，看看整座城市的天际线——并学会在出问题时如何找到方向。</p>
+    </header>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 1 — The Full Architecture
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">完整架构图</h3>
+
+      <p>你已经走遍了每个街区。现在让我们把视角拉远，看看整座城市的天际线。下面是 Claude Code 的完整<span class="term" data-definition="软件系统的高层结构——各主要组件如何组织、如何通信、各自承担什么职责。可以把它想象成一栋建筑的蓝图。">架构</span>。点击任意组件查看它的作用：</p>
+
+      <div class="arch-diagram animate-in">
+
+        <!-- Zone 1 — User Interface -->
+        <div class="arch-zone" style="border-color:#2A7B9B;">
+          <div class="arch-zone-label" style="color:#2A7B9B;">区域 1 — 用户界面</div>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);">
+            <div class="arch-component" data-desc="终端界面：输入、消息展示、权限弹窗、快捷键。这是代码库中最大的文件，超过 5000 行。运行 Claude Code 时你看到的一切都在这里。">
+              <span class="arch-icon">📺</span>
+              <span>REPL</span>
+            </div>
+            <div class="arch-component" data-desc="带历史记录、自动补全和 vim 模式的文本输入框。它捕获你输入的所有内容，然后发送给引擎处理。">
+              <span class="arch-icon">⌨️</span>
+              <span>PromptInput</span>
+            </div>
+            <div class="arch-component" data-desc="请求你批准工具操作的对话框。这是权限系统的可视化层——它会准确告诉你 Claude 想做什么，然后等你点确认或拒绝。">
+              <span class="arch-icon">🔔</span>
+              <span>Permissions UI</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zone 2 — Core Engine -->
+        <div class="arch-zone" style="border-color:#D94F30;">
+          <div class="arch-zone-label" style="color:#D94F30;">区域 2 — 核心引擎</div>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);">
+            <div class="arch-component" data-desc="会话协调器：把所有东西串在一起。管理对话历史，调用查询循环，追踪使用量和费用，记录会话日志，并处理记忆加载。">
+              <span class="arch-icon">🎬</span>
+              <span>QueryEngine</span>
+            </div>
+            <div class="arch-component" data-desc="对话循环：API 调用、工具执行、上下文压缩。这是 Claude Code 的心脏——一个 1700 行的异步生成器，循环执行调用、处理、执行、决策。">
+              <span class="arch-icon">🔄</span>
+              <span>query()</span>
+            </div>
+            <div class="arch-component" data-desc="消息的创建、标准化和历史管理。负责在内部格式之间转换、清理消息、构建发送给 API 的对话数组。">
+              <span class="arch-icon">📝</span>
+              <span>Messages</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zone 3 — External Services -->
+        <div class="arch-zone" style="border-color:#7B6DAA;">
+          <div class="arch-zone-label" style="color:#7B6DAA;">区域 3 — 外部服务</div>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);">
+            <div class="arch-component" data-desc="与 Anthropic API 通信、流式传输、重试机制。把提示词发送到云端的 Claude，逐 token 接收流式响应，并处理认证和错误恢复。">
+              <span class="arch-icon">🌐</span>
+              <span>Claude API</span>
+            </div>
+            <div class="arch-component" data-desc="通过 Model Context Protocol 连接的外部工具提供者。MCP 让 Claude Code 通过标准化接口连接数据库、云服务和其他工具——就像 AI 的 USB 接口。">
+              <span class="arch-icon">🔌</span>
+              <span><span class="term" data-definition="Model Context Protocol——一个让 AI 工具通过统一接口连接外部服务和数据源的标准。可以把它想象成 AI 的 USB：一种标准插头，能连接许多不同的设备。">MCP</span> Servers</span>
+            </div>
+            <div class="arch-component" data-desc="使用量追踪、功能开关、实验功能。收集匿名遥测数据帮助 Anthropic 改进 Claude Code，并通过功能标志控制哪些特性可用。">
+              <span class="arch-icon">📊</span>
+              <span>Analytics</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zone 4 — Tool Layer -->
+        <div class="arch-zone" style="border-color:#D4A843;">
+          <div class="arch-zone-label" style="color:#D4A843;">区域 4 — 工具层</div>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);">
+            <div class="arch-component" data-desc="批量执行：只读工具并行，写入工具串行。编排器将工具调用分成安全的批次——只读工具同时运行以提高速度，写入工具逐个运行以确保安全。">
+              <span class="arch-icon">🔧</span>
+              <span>Tool Orchestration</span>
+            </div>
+            <div class="arch-component" data-desc="文件操作、Shell 命令、搜索、子代理。Claude 可以选择的完整能力菜单——ReadFile、EditFile、Bash、Search 等等，还包括为并行任务生成子代理。">
+              <span class="arch-icon">📖</span>
+              <span>Built-in Tools</span>
+            </div>
+            <div class="arch-component" data-desc="权限规则、模式检查、安全门控。每个工具调用都会经过这一层——它检查白名单、黑名单和每次询问规则，然后才允许执行。">
+              <span class="arch-icon">🛡️</span>
+              <span>Permissions</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Zone 5 — Infrastructure -->
+        <div class="arch-zone" style="border-color:#2D8B55;">
+          <div class="arch-zone-label" style="color:#2D8B55;">区域 5 — 基础设施</div>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);">
+            <div class="arch-component" data-desc="启动流程：配置、认证、代理、TLS、遥测。它就像舞台监督——在所有东西之前运行，为应用程序准备好一切所需。使用记忆化确保只运行一次。">
+              <span class="arch-icon">🏗️</span>
+              <span>init()</span>
+            </div>
+            <div class="arch-component" data-desc="会话状态、token 预算、计数器。保存跨轮次持久化的运行时状态——已使用多少 token、当前第几轮、以及会话级配置。">
+              <span class="arch-icon">⚡</span>
+              <span>Bootstrap</span>
+            </div>
+            <div class="arch-component" data-desc="CLAUDE.md 文件，项目级 AI 指令。记忆系统会加载项目特定的上下文和指令，让 Claude 理解你的代码库规范和偏好。">
+              <span class="arch-icon">💾</span>
+              <span>Memory</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Description display -->
+        <div class="arch-description">点击任意组件了解它的功能</div>
+      </div>
+
+      <div class="callout callout-accent animate-in" style="margin-top:var(--space-6)">
+        <span class="callout-icon">🗺️</span>
+        <div>
+          <span class="callout-title">城市地图</span>
+          <p>这就是整个<span class="term" data-definition="一个包含多个相关项目或包的单一代码仓库。Claude Code 采用 monorepo 方式组织——CLI、工具、服务和 UI 的所有代码都放在一个地方。">monorepo</span>。五个区域，十五个组件，一个完整的系统。数据从用户界面层向下流动，经过引擎到达服务和工具层，基础设施从底层支撑一切。当出了问题时，你现在能准确知道该去哪个"街区"排查。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 2 — Common Failure Points
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">常见故障排查</h3>
+
+      <p>现在你已经能看到整张地图了，让我们来聊聊出问题时会发生什么。以下是用户最常遇到的五个问题——以及在架构中该到哪里去排查：</p>
+
+      <div class="step-cards stagger-children" style="margin-top:var(--space-6)">
+        <div class="step-card animate-in" style="border-left-color:var(--color-error);">
+          <span class="step-num" style="background:var(--color-error);">1</span>
+          <div class="step-body">
+            <strong>Claude 没有响应</strong>
+            <p>检查 <strong>API 层</strong>（<code>services/api/</code>）。可能是认证问题、速率限制或网络故障。这属于区域 3——你的机器和云端 Claude 之间的连接。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in" style="border-left-color:#D4A843;">
+          <span class="step-num" style="background:#D4A843;">2</span>
+          <div class="step-body">
+            <strong>Claude 有回复但没有做出更改</strong>
+            <p>检查<strong>工具系统</strong>（<code>services/tools/</code>）。可能是权限阻止了执行。Claude 知道该做什么，但安全门控拦住了它——看看区域 4。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in" style="border-left-color:#7B6DAA;">
+          <span class="step-num" style="background:#7B6DAA;">3</span>
+          <div class="step-body">
+            <strong>Claude 似乎忘记了之前的上下文</strong>
+            <p>检查<strong>上下文压缩</strong>（<code>services/compact/</code>）。对话可能被自动摘要了，丢失了具体细节。这是因为<span class="term" data-definition="AI 模型一次能在工作记忆中容纳的文本量（以 token 计量）。可以把它想象成内存——有一个固定上限，所有内容（系统提示、对话历史、工具结果）都必须放进去。">上下文窗口</span>空间不够了。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in" style="border-left-color:#2D8B55;">
+          <span class="step-num" style="background:#2D8B55;">4</span>
+          <div class="step-body">
+            <strong>启动缓慢或崩溃</strong>
+            <p>检查 <strong>init()</strong>（<code>entrypoints/init.ts</code>）。配置解析错误或代理问题是常见原因。这属于区域 5——其他一切都依赖的地基。</p>
+          </div>
+        </div>
+        <div class="step-card animate-in" style="border-left-color:#D94F30;">
+          <span class="step-num" style="background:#D94F30;">5</span>
+          <div class="step-body">
+            <strong>Claude 陷入循环，没有进展</strong>
+            <p>检查<strong>查询循环</strong>（<code>query.ts</code>）。可能需要调整最大轮次限制或 token 预算。Claude 可能在重复同一个操作，或者对话状态卡在了一个死循环里。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-info animate-in" style="margin-top:var(--space-6)">
+        <span class="callout-icon">💡</span>
+        <div>
+          <span class="callout-title">调试思维</span>
+          <p>注意到了吗？每个问题都能映射到架构中的一个特定区域。这就是理解全局的力量：当出了问题时，你不用慌张，而是可以冷静地问一句<em>"这属于哪一层？"</em>，然后把排查范围缩小到正确的"街区"。这正是专业开发者调试的方式。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 3 — Patterns Worth Knowing
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">值得了解的设计模式</h3>
+
+      <p>在整个课程中，你反复看到了相同的工程模式。这些并非 Claude Code 独有——它们是整个软件行业久经考验的策略。了解它们，你就能读懂专业软件是怎么构建的。</p>
+
+      <div class="pattern-cards stagger-children" style="margin-top:var(--space-8)">
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">🔁</div>
+          <div class="pattern-title">Agent Loop（智能体循环）</div>
+          <p class="pattern-desc">AI 做出决策、执行动作、观察结果、然后重复。这是所有 AI 编程工具背后的核心模式，也是让智能体区别于简单聊天机器人的关键。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">⚡</div>
+          <div class="pattern-title">Parallel Prefetch（并行预取）</div>
+          <p class="pattern-desc">提前启动耗时操作，稍后再收集结果。用于启动优化——同时发起网络请求和文件读取，这样就没有任务需要排队等待。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">🧠</div>
+          <div class="pattern-title">Memoization（记忆化）</div>
+          <p class="pattern-desc">计算一次，永远复用。用于 init() 和许多内部缓存。既然答案没变，为什么要重新计算一遍呢？</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">✂️</div>
+          <div class="pattern-title"><span class="term" data-definition="一个控制功能是否包含在软件最终构建中的开关。与运行时开关不同，编译时功能标志会完全移除未使用的代码，让应用程序更小更快。">Feature Flags（功能标志）</span></div>
+          <p class="pattern-desc">在编译时开关功能，彻底去除未使用的代码。不会发布任何<span class="term" data-definition="存在于源代码中但永远不会被执行的代码，因为它已被禁用或不可达。编译时功能标志在最终构建中消除死代码，让应用程序更小。">死代码</span>——如果<span class="term" data-definition="一个控制功能是否包含在软件最终构建中的开关。与运行时开关不同，编译时功能标志会完全移除未使用的代码，让应用程序更小更快。">功能门控</span>关闭了，那段代码在构建中就不存在。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">🔒</div>
+          <div class="pattern-title">Permission Gates（权限门控）</div>
+          <p class="pattern-desc">操作之前，必先请求许可。这是 AI 工具的安全原则。每个破坏性操作都必须通过检查，让人类拥有最终决定权。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">🗜️</div>
+          <div class="pattern-title">Context Compaction（上下文压缩）</div>
+          <p class="pattern-desc">摘要旧对话以适应 AI 记忆限制。用细节换容量——就像把会议记录浓缩成要点，这样才能继续讨论。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">📺</div>
+          <div class="pattern-title">Terminal React（终端 React）</div>
+          <p class="pattern-desc">用 React（一个 Web UI 框架）在终端中渲染丰富的界面。组件化、状态管理、声明式渲染——只不过是在命令行里而不是浏览器中。</p>
+        </div>
+        <div class="pattern-card animate-in">
+          <div class="pattern-icon" style="background:var(--color-accent-light);color:var(--color-accent);">🔄</div>
+          <div class="pattern-title">Async Generators（异步生成器）</div>
+          <p class="pattern-desc">逐段传输数据，而不是等到全部完成。用于对话循环——你能实时看到 Claude 思考时逐字出现的文字。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 4 — Your Debugging Toolkit
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">你的调试工具箱</h3>
+
+      <p>现在你已经理解了架构，让我们来实战演练。团队成员们在这里帮你排查问题。点击<strong>下一条</strong>来看看他们怎么说：</p>
+
+      <!-- GROUP CHAT -->
+      <div class="chat-window animate-in" id="chat-module6">
+        <div class="chat-messages">
+
+          <!-- Message 1 — Learner -->
+          <div class="chat-message" data-sender="Learner" style="display:none">
+            <div class="chat-avatar" style="background:#2A7B9B">🧑</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#2A7B9B">你</span>
+              <p>Claude Code 卡在循环里了——它一直尝试编辑一个文件但总是失败。我应该检查什么？</p>
+            </div>
+          </div>
+
+          <!-- Message 2 — Tool System -->
+          <div class="chat-message" data-sender="Tools" style="display:none">
+            <div class="chat-avatar" style="background:#D4A843">🔧</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#D4A843">Tool System</span>
+              <p>检查一下文件是否有正确的权限。还有检查文件路径是否正确——路径无效的工具调用会被我拒绝。</p>
+            </div>
+          </div>
+
+          <!-- Message 3 — QueryEngine -->
+          <div class="chat-message" data-sender="QueryEngine" style="display:none">
+            <div class="chat-avatar" style="background:#D94F30">🎬</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#D94F30">QueryEngine</span>
+              <p>看看轮次计数。如果我已经运行了太多轮，可能会达到最大轮次限制然后停下来。</p>
+            </div>
+          </div>
+
+          <!-- Message 4 — query() -->
+          <div class="chat-message" data-sender="query" style="display:none">
+            <div class="chat-avatar" style="background:#7B6DAA">🔄</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#7B6DAA">query()</span>
+              <p>检查一下上下文压缩的状态。如果对话最近刚被压缩过，我可能丢失了关于之前已经尝试过什么的上下文。</p>
+            </div>
+          </div>
+
+          <!-- Message 5 — Learner -->
+          <div class="chat-message" data-sender="Learner" style="display:none">
+            <div class="chat-avatar" style="background:#2A7B9B">🧑</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#2A7B9B">你</span>
+              <p>那如果 Claude 给了一个很好的回复，但看起来不完整呢？</p>
+            </div>
+          </div>
+
+          <!-- Message 6 — API Service -->
+          <div class="chat-message" data-sender="API" style="display:none">
+            <div class="chat-avatar" style="background:#2D8B55">🌐</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#2D8B55">API Service</span>
+              <p>那多半是我的问题——检查一下响应是否触及了最大输出 token 限制。我会尝试请求 Claude 继续输出，但有时候重试次数也会用尽。</p>
+            </div>
+          </div>
+
+          <!-- Message 7 — QueryEngine -->
+          <div class="chat-message" data-sender="QueryEngine" style="display:none">
+            <div class="chat-avatar" style="background:#D94F30">🎬</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#D94F30">QueryEngine</span>
+              <p>还要检查对话是否在响应过程中被压缩了。摘要可能丢掉了一些细节。</p>
+            </div>
+          </div>
+
+          <!-- Message 8 — Learner -->
+          <div class="chat-message" data-sender="Learner" style="display:none">
+            <div class="chat-avatar" style="background:#2A7B9B">🧑</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color:#2A7B9B">你</span>
+              <p>谢谢大家！现在我知道该去哪里排查了。</p>
+            </div>
+          </div>
+
+        </div><!-- /chat-messages -->
+
+        <!-- Typing indicator -->
+        <div class="chat-typing" style="display:none">
+          <div class="chat-avatar" id="chat-module6-typing-avatar" style="background:var(--color-text-muted);width:28px;height:28px;font-size:var(--text-xs);">?</div>
+          <div class="chat-typing-dots">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="chat-controls">
+          <button class="btn btn-primary chat-next-btn">下一条</button>
+          <button class="btn chat-all-btn">显示全部</button>
+          <button class="btn chat-reset-btn">重置</button>
+          <span class="chat-progress">0 / 8 条消息</span>
+        </div>
+      </div><!-- /chat-window -->
+
+      <div class="callout callout-accent animate-in" style="margin-top:var(--space-6)">
+        <span class="callout-icon">🔑</span>
+        <div>
+          <span class="callout-title">真正的超能力</span>
+          <p>注意到了吗？每个角色都能立即知道问题的哪个部分属于自己。这就是职责分离的力量——当每个组件都有明确的职责时，调试就变成了一场对话，而不是一个谜团。你现在也拥有了同样的直觉。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 5 — What You Can Do Now
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">你现在能做什么</h3>
+
+      <p>你开始这门课程时，还只是一个使用 AI 编程工具但不理解其原理的人。现在你拥有了专业词汇、心智模型和实用技能，可以自信地在这个领域里导航。以下是你收获的能力：</p>
+
+      <div class="icon-rows stagger-children" style="margin-top:var(--space-6)">
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-accent-light);color:var(--color-accent);">🗺️</div>
+          <div>
+            <strong>导航代码库</strong>
+            <p>你知道每个主要模块在哪里、做什么——从 REPL 到查询循环再到工具编排器。</p>
+          </div>
+        </div>
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-error-light);color:var(--color-error);">🐛</div>
+          <div>
+            <strong>调试问题</strong>
+            <p>你能将问题追踪到正确的层级：UI、引擎、API、工具或基础设施。再也不用瞎猜了。</p>
+          </div>
+        </div>
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-info-light);color:var(--color-info);">🗣️</div>
+          <div>
+            <strong>精准地与 AI 工具对话</strong>
+            <p>你已经掌握了智能体循环、工具编排、上下文压缩、功能标志和记忆化等术语。</p>
+          </div>
+        </div>
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:#FDF5E0;color:#D4A843;">🏗️</div>
+          <div>
+            <strong>做架构决策</strong>
+            <p>你理解了职责分离、权限门控和并行执行等模式。</p>
+          </div>
+        </div>
+        <div class="icon-row animate-in">
+          <div class="icon-circle" style="background:var(--color-success-light);color:var(--color-success);">📖</div>
+          <div>
+            <strong>阅读真实代码库</strong>
+            <p>你已经练习了阅读 TypeScript 代码并将其翻译成通俗语言——这项技能适用于任何项目。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-info animate-in" style="margin-top:var(--space-8)">
+        <span class="callout-icon">🎓</span>
+        <div>
+          <span class="callout-title">恭喜你</span>
+          <p>你刚刚学完了一个被数千名开发者使用的生产级 AI 编程工具的架构。这不是教科书上的知识——这是真实的东西。下次你使用 AI 编程助手时如果遇到了意外行为，你会准确地知道底层正在发生什么。</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SCREEN 6 — Quiz (Final — Graduation Exam)
+         ══════════════════════════════════════════════════════════ -->
+    <div class="screen animate-in">
+      <h3 class="screen-heading">毕业考试</h3>
+
+      <div class="quiz-container animate-in" id="quiz-module6">
+
+        <!-- Q1 — Safety Feature -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="权限系统是任何能修改文件的 AI 工具最关键的安全特性。Claude Code 在没有你明确批准的情况下，绝不会写入、删除或运行命令——你构建的任何 AI 工具都应该遵循同样的原则。"
+             data-explanation-wrong="语法高亮、更快的 API 和漂亮的错误提示都是锦上添花，但它们无法保护用户免受意外更改。权限系统才是安全的基石——它确保 AI 在没有人类批准的情况下不能修改文件或运行危险命令。">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">场景</span>
+              <p>你正在构建一个新的 AI 工具，它需要读取用户文件、调用 AI API，然后将结果写回。</p>
+            </div>
+          </div>
+          <div class="quiz-question">根据 Claude Code 的架构，最重要的安全特性是什么？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>语法高亮</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>在写入文件前需要用户批准的权限系统</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>更快的 API</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>漂亮的错误提示</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- Q2 — Big Refactoring -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="长对话会填满上下文窗口。当空间不足时，Claude Code 会自动压缩（摘要）较旧的消息来腾出空间。这个摘要可能丢失关键细节——比如哪些文件已经修改过、做了什么具体编辑——导致 Claude 重复或矛盾之前的工作。"
+             data-explanation-wrong="AI 模型本身完全有能力处理复杂任务。真正的问题在于上下文窗口限制——模型一次能在记忆中保持的内容是有限的。当大型重构产生大量消息时，压缩会把它们摘要掉，Claude 就会丢失对细节的追踪。">
+          <div class="quiz-question">一个用户反映 Claude Code 处理小任务没问题，但大型重构就会失败。根据你的理解，最可能的原因是什么？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>AI 模型不够聪明</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>对话上下文超出了 token 限制，压缩过程丢失了关键细节</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>终端无法显示那么多文字</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>不支持大型重构</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <!-- Q3 — Feature Flags -->
+        <div class="quiz-question-block" data-correct="b"
+             data-explanation-right="编译时功能标志会从构建中完全移除未使用的代码。与运行时检查不同（那会增加死代码并拖慢速度），功能标志确保不需要该功能的用户零成本——没有多余的字节，没有多余的 CPU 消耗。"
+             data-explanation-wrong="运行时 if/else 检查仍然会加载代码，即使不使用（死代码）。独立应用增加维护负担。每次启动都加载浪费资源。编译时功能标志才是最干净的方案——它直接从不需要该功能的构建中剥离代码，使其完全不存在。">
+          <div class="quiz-question">你想给 Claude Code 添加一个新的实验性功能，但又不想拖慢不需要它的用户。你会使用代码库中的哪种模式？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="a" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>在运行时添加 if/else 判断</span>
+            </button>
+            <button class="quiz-option" data-value="b" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>使用编译时功能标志，让代码从不需要它的构建中完全移除</span>
+            </button>
+            <button class="quiz-option" data-value="c" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>放到单独的应用里</span>
+            </button>
+            <button class="quiz-option" data-value="d" onclick="selectOption(this)">
+              <span class="quiz-option-radio"></span>
+              <span>每次启动都加载，但不显示界面</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div style="display:flex;gap:var(--space-3);margin-top:var(--space-6)">
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module6')">检查答案</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module6')">重置</button>
+        </div>
+
+      </div><!-- /quiz-container -->
+
+      <!-- Q4 — Drag and Drop: Trace the full journey -->
+      <div class="dnd-container animate-in" id="dnd-module6" style="margin-top:var(--space-10)">
+        <h4 style="font-family:var(--font-display);font-size:var(--text-lg);font-weight:600;margin-bottom:var(--space-2);">追踪完整流程</h4>
+        <p style="margin-bottom:var(--space-4);color:var(--color-text-secondary);font-size:var(--text-sm);">你输入了 <em>"fix the typo in README.md"</em>。把每个步骤拖到正确的位置：</p>
+
+        <div class="dnd-chips">
+          <div class="dnd-chip" draggable="true" data-answer="result">结果被发送回 Claude，Claude 确认修复完成</div>
+          <div class="dnd-chip" draggable="true" data-answer="api">Claude API 以流式方式返回一个包含工具调用的响应</div>
+          <div class="dnd-chip" draggable="true" data-answer="repl">REPL 捕获你的输入</div>
+          <div class="dnd-chip" draggable="true" data-answer="tools">Tool System 执行修复操作</div>
+          <div class="dnd-chip" draggable="true" data-answer="engine">QueryEngine 构建并发送 API 请求</div>
+        </div>
+
+        <div class="dnd-zones">
+          <div class="dnd-zone" data-correct="repl">
+            <div class="dnd-zone-label">第 1 步</div>
+            <div class="dnd-zone-target">拖放到这里</div>
+          </div>
+          <div class="dnd-zone" data-correct="engine">
+            <div class="dnd-zone-label">第 2 步</div>
+            <div class="dnd-zone-target">拖放到这里</div>
+          </div>
+          <div class="dnd-zone" data-correct="api">
+            <div class="dnd-zone-label">第 3 步</div>
+            <div class="dnd-zone-target">拖放到这里</div>
+          </div>
+          <div class="dnd-zone" data-correct="tools">
+            <div class="dnd-zone-label">第 4 步</div>
+            <div class="dnd-zone-target">拖放到这里</div>
+          </div>
+          <div class="dnd-zone" data-correct="result">
+            <div class="dnd-zone-label">第 5 步</div>
+            <div class="dnd-zone-target">拖放到这里</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:var(--space-3);margin-top:var(--space-6)">
+          <button class="quiz-check-btn" onclick="checkDnD('dnd-module6')">检查匹配</button>
+          <button class="quiz-reset-btn" onclick="resetDnD('dnd-module6')">重置</button>
+        </div>
+      </div>
+
+    </div><!-- /screen 6 -->
+
+    <!-- ── FINAL TAKEAWAY ────────────────────────────────────── -->
+    <div class="callout callout-info animate-in" style="margin-top:var(--space-4);margin-bottom:var(--space-8)">
+      <span class="callout-icon">🎯</span>
+      <div>
+        <span class="callout-title">课程完成</span>
+        <p>你从鸟瞰 Claude Code 全貌开始，走过驱动它的各个角色，深入对话循环的核心，穿越工具系统的操作室，探秘启动和性能优化的幕后，最终回到了整座城市的天际线。你不再只是一个 AI 编程工具的使用者——你理解了它们是如何构建的。这份理解，就是你的优势。</p>
+      </div>
+    </div>
+
+  </div><!-- /module-content -->
+</section>
