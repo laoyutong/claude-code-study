@@ -17,6 +17,11 @@ import { toError } from '../../utils/errors.js'
 import { truncate } from '../../utils/format.js'
 import { logError } from '../../utils/log.js'
 
+/**
+ * 中文：生成列入系统提示/工具描述的「技能列表」片段时的预算与裁剪逻辑——仅占上下文一小部分字符，
+ * 详情在真正 `Skill` 调用时再加载，以节省首 token。
+ */
+
 // Skill listing gets 1% of the context window (in characters)
 export const SKILL_BUDGET_CONTEXT_PERCENT = 0.01
 export const CHARS_PER_TOKEN = 4

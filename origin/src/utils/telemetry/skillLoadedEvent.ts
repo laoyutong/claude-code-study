@@ -9,6 +9,8 @@ import { getCharBudget } from '../../tools/SkillTool/prompt.js'
 /**
  * Logs a tengu_skill_loaded event for each skill available at session startup.
  * This enables analytics on which skills are available across sessions.
+ *
+ * 中文：会话启动时对当前可用技能逐条打点，便于分析不同环境/来源的技能曝光与预算配置。
  */
 export async function logSkillsLoaded(
   cwd: string,

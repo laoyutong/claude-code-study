@@ -75,8 +75,17 @@ import {
 } from './UI.js'
 
 /**
+ * Skill 工具：让模型按名称加载并执行本地/内置/MCP 等「技能」类 prompt 命令。
+ *
+ * 中文：本文件实现前台工具调用、权限与遥测、fork 子代理执行可选路径、以及与 experimental 远程技能搜索的集成。
+ * `getCommands()` 不含纯 MCP 暴露物时，需从 AppState 合并 `loadedFrom === 'mcp'` 的 prompt 技能。
+ */
+
+/**
  * Gets all commands including MCP skills/prompts from AppState.
  * SkillTool needs this because getCommands() only returns local/bundled skills.
+ *
+ * 中文：`getCommands` 仅覆盖本地与内置；此处把 AppState 里的 MCP 技能并入，避免模型只能通过猜名字间接调用。
  */
 async function getAllCommands(context: ToolUseContext): Promise<Command[]> {
   // Only include MCP skills (loadedFrom === 'mcp'), not plain MCP prompts.

@@ -20,6 +20,8 @@ import { registerVerifySkill } from './verify.js'
  * 1. Create a new file in src/skills/bundled/ (e.g., myskill.ts)
  * 2. Export a register function that calls registerBundledSkill()
  * 3. Import and call that function here
+ *
+ * 中文：启动入口，按特性开关注册各类内置技能（KAIROS、REMOTE AGENTS、Chrome 等通过 `feature()` 或运行时条件分包加载）。
  */
 export function initBundledSkills(): void {
   registerUpdateConfigSkill()

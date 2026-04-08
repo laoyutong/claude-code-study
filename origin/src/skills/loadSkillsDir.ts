@@ -64,16 +64,30 @@ import { HooksSchema, type HooksSettings } from '../utils/settings/types.js'
 import { createSignal } from '../utils/signal.js'
 import { registerMCPSkillBuilders } from './mcpSkillBuilders.js'
 
+/**
+ * 技能（Skills）目录加载与运行时生命周期。
+ *
+ * 职责概览：
+ * - 从托管策略、用户 `~/.claude`、项目 `.claude/skills`、额外 `--add-dir`、以及 legacy `.claude/commands` 扫描 `SKILL.md`；
+ * - 解析 frontmatter，统一构建可执行的 `Command`（占位符、`${CLAUDE_SKILL_DIR}` / `${CLAUDE_SESSION_ID}`、本地文件的内联 shell；MCP 来源禁止执行内联 shell）；
+ * - 使用 `realpath` 对同一物理文件去重，避免符号链接或重叠目录重复注册；
+ * - 「条件技能」：带 `paths` frontmatter 的技能在未匹配到工作区文件前暂存，匹配后迁入动态技能表；
+ * - 会话中沿被编辑文件路径向上发现嵌套 `.claude/skills`（不含 cwd 顶层，由启动时已加载），并合并为动态技能；
+ * - 模块加载时向 `mcpSkillBuilders` 注册 `createSkillCommand` / `parseSkillFrontmatterFields`，让 MCP 技能发现复用同一实现且避免与 `client` 形成 import 环。
+ */
+
 export type LoadedFrom =
-  | 'commands_DEPRECATED'
-  | 'skills'
-  | 'plugin'
-  | 'managed'
-  | 'bundled'
-  | 'mcp'
+  | 'commands_DEPRECATED' // 旧版：自 `.claude/commands` 中的 SKILL.md 或普通 .md 载入（仍视为技能）
+  | 'skills' // 标准：`.claude/skills/<name>/SKILL.md`
+  | 'plugin' // 插件注入
+  | 'managed' // 托管/企业策略目录
+  | 'bundled' // 内置随二进制打包的技能
+  | 'mcp' // MCP 服务器暴露的技能
 
 /**
  * Returns a claude config directory path for a given source.
+ *
+ * 中文：根据配置来源返回「技能」或「命令」子目录的绝对/约定路径（如用户级 `~/.claude/skills`）。
  */
 export function getSkillsPath(
   source: SettingSource | 'plugin',
@@ -96,6 +110,8 @@ export function getSkillsPath(
 /**
  * Estimates token count for a skill based on frontmatter only
  * (name, description, whenToUse) since full content is only loaded on invocation.
+ *
+ * 中文：列表/预算阶段只统计元数据估算 token；正文仅在真正调用技能时才展开。
  */
 export function estimateSkillFrontmatterTokens(skill: Command): number {
   const frontmatterText = [skill.name, skill.description, skill.whenToUse]
@@ -114,6 +130,8 @@ export function estimateSkillFrontmatterTokens(skill: Command): number {
  * issues with filesystems that report unreliable inode values (e.g., inode 0 on
  * some virtual/container/NFS filesystems, or precision loss on ExFAT).
  * See: https://github.com/anthropics/claude-code/issues/13893
+ *
+ * 中文：用规范化真实路径标识「同一文件」，比 inode 更可靠（容器/NFS 等环境 inode 不可信）。
  */
 async function getFileIdentity(filePath: string): Promise<string | null> {
   try {
@@ -124,6 +142,7 @@ async function getFileIdentity(filePath: string): Promise<string | null> {
 }
 
 // Internal type to track skill with its file path for deduplication
+// 中文：加载阶段的中间结构——保留磁盘路径以便后续 realpath 去重。
 type SkillWithPath = {
   skill: Command
   filePath: string
@@ -132,6 +151,8 @@ type SkillWithPath = {
 /**
  * Parse and validate hooks from frontmatter.
  * Returns undefined if hooks are not defined or invalid.
+ *
+ * 中文：技能 YAML frontmatter 中的 `hooks` 配置；校验失败则静默忽略并写调试日志。
  */
 function parseHooksFromFrontmatter(
   frontmatter: FrontmatterData,
@@ -155,6 +176,8 @@ function parseHooksFromFrontmatter(
 /**
  * Parse paths frontmatter from a skill, using the same format as CLAUDE.md rules.
  * Returns undefined if no paths are specified or if all patterns are match-all.
+ *
+ * 中文：与 CLAUDE.md 规则相同的 glob/ignore 风格；`**` 全匹配视为「不限制路径」（等价于未配置）。
  */
 function parseSkillPaths(frontmatter: FrontmatterData): string[] | undefined {
   if (!frontmatter.paths) {
@@ -181,6 +204,8 @@ function parseSkillPaths(frontmatter: FrontmatterData): string[] | undefined {
  * Parses all skill frontmatter fields that are shared between file-based and
  * MCP skill loading. Caller supplies the resolved skill name and the
  * source/loadedFrom/baseDir/paths fields separately.
+ *
+ * 中文：磁盘技能与 MCP 技能共用同一套 frontmatter 解析；来源相关字段由调用方单独传入。
  */
 export function parseSkillFrontmatterFields(
   frontmatter: FrontmatterData,
@@ -266,6 +291,8 @@ export function parseSkillFrontmatterFields(
 
 /**
  * Creates a skill command from parsed data
+ *
+ * 中文：把解析结果固化为 `Command`；`getPromptForCommand` 内完成变量替换、（非 MCP）内联 shell 执行与安全上下文注入。
  */
 export function createSkillCommand({
   skillName,
@@ -403,6 +430,8 @@ export function createSkillCommand({
 /**
  * Loads skills from a /skills/ directory path.
  * Only supports directory format: skill-name/SKILL.md
+ *
+ * 中文：仅支持「一级子目录名 = 技能名 + 目录内 SKILL.md」；平铺单文件 .md 在此路径下不支持。
  */
 async function loadSkillsFromSkillsDir(
   basePath: string,
@@ -480,6 +509,7 @@ async function loadSkillsFromSkillsDir(
 }
 
 // --- Legacy /commands/ loader ---
+// 中文：历史兼容——`.claude/commands` 下的 SKILL.md 与普通 slash 命令混用时的处理。
 
 function isSkillFile(filePath: string): boolean {
   return /^skill\.md$/i.test(basename(filePath))
@@ -489,6 +519,8 @@ function isSkillFile(filePath: string): boolean {
  * Transforms markdown files to handle "skill" commands in legacy /commands/ folder.
  * When a SKILL.md file exists in a directory, only that file is loaded
  * and it takes the name of its parent directory.
+ *
+ * 中文：若某目录存在 `skill.md`，则只保留该文件作为该目录代表，技能名为父目录名。
  */
 function transformSkillFiles(files: MarkdownFile[]): MarkdownFile[] {
   const filesByDir = new Map<string, MarkdownFile[]>()
@@ -562,6 +594,8 @@ function getCommandName(file: MarkdownFile): string {
  * Loads skills from legacy /commands/ directories.
  * Supports both directory format (SKILL.md) and single .md file format.
  * Commands from /commands/ default to user-invocable: true
+ *
+ * 中文：legacy 路径下仍可作为技能加载；默认允许用户用 `/命令名` 唤起。
  */
 async function loadSkillsFromCommandsDir(
   cwd: string,
@@ -634,6 +668,9 @@ async function loadSkillsFromCommandsDir(
  * - Default to user-invocable: true (user can type /cmd)
  *
  * @param cwd Current working directory for project directory traversal
+ *
+ * 中文：合并托管/用户/项目/附加目录与 legacy commands；`--bare` 仅加载显式 `--add-dir`；
+ * 受插件仅策略或环境变量影响时会跳过部分来源；返回值仅含「非条件」技能，条件技能进入 `conditionalSkills`。
  */
 export const getSkillDirCommands = memoize(
   async (cwd: string): Promise<Command[]> => {
@@ -803,6 +840,7 @@ export const getSkillDirCommands = memoize(
   },
 )
 
+/** 中文：清空技能目录缓存、条件技能状态等，供配置变更或测试使用。 */
 export function clearSkillCaches() {
   getSkillDirCommands.cache?.clear?.()
   loadMarkdownFilesForSubdir.cache?.clear?.()
@@ -811,17 +849,20 @@ export function clearSkillCaches() {
 }
 
 // Backwards-compatible aliases for tests
+// 中文：旧测试/调用方使用的别名名。
 export { getSkillDirCommands as getCommandDirCommands }
 export { clearSkillCaches as clearCommandCaches }
 export { transformSkillFiles }
 
 // --- Dynamic skill discovery ---
+// 中文：会话中随文件操作发现的嵌套技能目录及其已加载技能。
 
 // State for dynamically discovered skills
 const dynamicSkillDirs = new Set<string>()
 const dynamicSkills = new Map<string, Command>()
 
 // --- Conditional skills (path-filtered) ---
+// 中文：带 `paths` 的技能先放在 conditional map，命中工作区路径后再并入 dynamicSkills。
 
 // Skills with paths frontmatter that haven't been activated yet
 const conditionalSkills = new Map<string, Command>()
@@ -835,6 +876,8 @@ const skillsLoaded = createSignal()
  * Register a callback to be invoked when dynamic skills are loaded.
  * Used by other modules to clear caches without creating import cycles.
  * Returns an unsubscribe function.
+ *
+ * 中文：动态技能加载后通知订阅者（如仅清理命令 memo），避免直接把 `loadSkillsDir` 拉进环状依赖。
  */
 export function onDynamicSkillsLoaded(callback: () => void): () => void {
   // Wrap at subscribe time so a throwing listener is logged and skipped
@@ -857,6 +900,8 @@ export function onDynamicSkillsLoaded(callback: () => void): () => void {
  * @param filePaths Array of file paths to check
  * @param cwd Current working directory (upper bound for discovery)
  * @returns Array of newly discovered skill directories, sorted deepest first
+ *
+ * 中文：从被触碰文件的目录向上走到 cwd（不含 cwd），收集路径上的 `.claude/skills`；忽略 gitignore 目录；深度优先排序保证更近的技能优先。
  */
 export async function discoverSkillDirsForPaths(
   filePaths: string[],
@@ -919,6 +964,8 @@ export async function discoverSkillDirsForPaths(
  * Skills from directories closer to the file (deeper paths) take precedence.
  *
  * @param dirs Array of skill directories to load from (should be sorted deepest first)
+ *
+ * 中文：将多个目录的技能并入 `dynamicSkills`；同名后者覆盖（已按「浅→深」逆序处理，深层优先）。
  */
 export async function addSkillDirectories(dirs: string[]): Promise<void> {
   if (
@@ -977,6 +1024,8 @@ export async function addSkillDirectories(dirs: string[]): Promise<void> {
 /**
  * Gets all dynamically discovered skills.
  * These are skills discovered from file paths during the session.
+ *
+ * 中文：返回本会话中动态发现与条件激活后的技能副本列表。
  */
 export function getDynamicSkills(): Command[] {
   return Array.from(dynamicSkills.values())
@@ -993,6 +1042,8 @@ export function getDynamicSkills(): Command[] {
  * @param filePaths Array of file paths being operated on
  * @param cwd Current working directory (paths are matched relative to cwd)
  * @returns Array of newly activated skill names
+ *
+ * 中文：用与 gitignore 相同的 `ignore` 库匹配相对 cwd 的路径；命中的技能从 conditional 移至 dynamic 并发事件。
  */
 export function activateConditionalSkillsForPaths(
   filePaths: string[],
@@ -1059,6 +1110,8 @@ export function activateConditionalSkillsForPaths(
 
 /**
  * Gets the number of pending conditional skills (for testing/debugging).
+ *
+ * 中文：仍待路径匹配激活的条件技能数量。
  */
 export function getConditionalSkillCount(): number {
   return conditionalSkills.size
@@ -1066,6 +1119,8 @@ export function getConditionalSkillCount(): number {
 
 /**
  * Clears dynamic skill state (for testing).
+ *
+ * 中文：测试用；清空动态目录记录、动态技能、条件技能与已激活名集合。
  */
 export function clearDynamicSkills(): void {
   dynamicSkillDirs.clear()
@@ -1079,6 +1134,7 @@ export function clearDynamicSkills(): void {
 // indirection exists (a literal dynamic import from mcpSkills.ts fans a single
 // edge out into many cycle violations; a variable-specifier dynamic import
 // passes dep-cruiser but fails to resolve in Bun-bundled binaries at runtime).
+// 中文：见 `mcpSkillBuilders.ts` —— 通过叶节点注册表打破 MCP 客户端与海量依赖之间的环，并兼容 Bun 打包解析。
 // eslint-disable-next-line custom-rules/no-top-level-side-effects -- write-once registration, idempotent
 registerMCPSkillBuilders({
   createSkillCommand,

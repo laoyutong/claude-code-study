@@ -20,6 +20,10 @@ import { skillChangeDetector } from '../utils/skills/skillChangeDetector.js'
  *    a flag rename: getCommands() runs before GB init (main.tsx:2855 vs
  *    showSetupScreens at :3106), so the memoized list is baked with the
  *    default. Once init populates remoteEvalFeatureValues, re-filter.
+ *
+ * 中文：React 侧同步「技能/命令列表」与磁盘及远程开关状态。
+ * - 文件监听：`skillChangeDetector` 触发后清命令缓存并 `getCommands`；
+ * - GrowthBook：仅清理 memo，重新拉取列表（解决首屏早于 GB 初始化导致 `isEnabled` 默认值固化的问题）。
  */
 export function useSkillsChange(
   cwd: string | undefined,

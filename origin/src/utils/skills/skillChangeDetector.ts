@@ -22,6 +22,14 @@ import { executeConfigChangeHooks, hasBlockingResult } from '../hooks.js'
 import { createSignal } from '../signal.js'
 
 /**
+ * 技能与 legacy 命令目录的文件变更侦测。
+ *
+ * 中文：用 chokidar 监视用户/项目等路径下的 `.claude/skills` 与 `.claude/commands`，
+ * 写入稳定后防抖批量触发：可配置变更钩子 → `clearSkillCaches` + `clearCommandsCache` → 通知 UI 重载。
+ * Bun 下默认 stat 轮询以避免原生 fs.watch 死锁（见 USE_POLLING）。动态技能加载则通过 `onDynamicSkillsLoaded` 只清 memo、保留已发现的动态技能。
+ */
+
+/**
  * Time in milliseconds to wait for file writes to stabilize before processing.
  */
 const FILE_STABILITY_THRESHOLD_MS = 1000
@@ -81,6 +89,8 @@ let testOverrides: {
 
 /**
  * Initialize file watching for skill directories
+ *
+ * 中文：启动 chokidar；并注册 `onDynamicSkillsLoaded` 时只 `clearCommandMemoizationCaches`，避免误清动态技能映射。
  */
 export async function initialize(): Promise<void> {
   if (initialized || disposed) return
@@ -142,6 +152,8 @@ export async function initialize(): Promise<void> {
 
 /**
  * Clean up file watcher
+ *
+ * 中文：关闭 watcher、清理防抖定时器与订阅状态。
  */
 export function dispose(): Promise<void> {
   disposed = true
@@ -165,6 +177,8 @@ export function dispose(): Promise<void> {
 
 /**
  * Subscribe to skill changes
+ *
+ * 中文：订阅「技能定义已因磁盘或动态加载而改变」信号。
  */
 export const subscribe = skillsChanged.subscribe
 
