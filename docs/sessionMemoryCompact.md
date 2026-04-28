@@ -143,6 +143,81 @@ createCompactionResultFromSessionMemory()
 
 ---
 
+## 压缩前后上下文对比
+
+### 压缩前
+
+```
+[系统消息 / claude.md 等]
+[历史消息 m1]
+[历史消息 m2]
+...
+[CompactBoundaryMessage (上次压缩的边界标记)]  ← lastSummarizedIndex
+[近期消息 m_k]
+[近期消息 m_k+1]
+...
+[当前消息 m_n]                                 ← lastSummarizedMessageId (若安全)
+```
+
+所有消息按顺序排列，`lastSummarizedIndex` 标记了上一次压缩发生的位置，之前的消息都已在上次压缩时"覆盖"过。
+
+### 压缩后
+
+`buildPostCompactMessages` 按固定顺序拼装：
+
+```
+[系统消息 / claude.md 等]                       ← 不变，持续存在
+[CompactBoundaryMessage (本次压缩边界标记)]       ← 类型 system/subtype compact_boundary
+  compactMetadata:
+    trigger: 'auto' | 'manual'
+    preTokens: 压缩前 token 数
+    preCompactDiscoveredTools: ['ToolA', 'ToolB', ...]
+    preservedSegment:                           ← annotateBoundaryWithPreservedSegment 写入
+      headUuid: 保留片段第一条消息的 uuid
+      anchorUuid: 摘要消息的 uuid
+      tailUuid: 保留片段最后一条消息的 uuid
+[SM 摘要消息 (user 消息)]                        ← isCompactSummary + isVisibleInTranscriptOnly
+  内容: "This session is being continued from a previous conversation..."
+  + SM 截断后的内容
+  + "Recent messages are preserved verbatim."
+[消息 m_start ... m_n]                          ← messagesToKeep（保留的近期消息）
+[Plan 附件]                                     ← 如果 agent 有 Plan
+[Hook 结果消息]                                  ← session start hooks 的输出
+```
+
+### 关键变化
+
+| 维度 | 压缩前 | 压缩后 |
+|------|--------|--------|
+| 旧历史消息 | 完整保留在上下文中 | **全部丢弃**，由 SM 摘要替代 |
+| SM 摘要 | 不在上下文中 | 作为 user 消息插入，标记 `isVisibleInTranscriptOnly` |
+| 边界标记 | 上一次的标记（如有） | 新的 `compact_boundary` system 消息 |
+| 近期消息 | 普通排列 | 原样保留，片段的头尾 uuid 写入边界标记的 `preservedSegment` |
+| Plan / Hooks | 可能分散在各处 | 统一挂在最后 |
+| 对 API 可见 | 全部可见 | SM 摘要消息 `isVisibleInTranscriptOnly`，不拼入 API 请求体 |
+
+**核心效果**：压缩前的旧消息被一条 SM 摘要替代，上下文窗口大幅缩减；近期消息原样保留，模型能直接引用；边界标记记录片段的 uuid 供 loader 恢复消息链。
+
+### Transcript 中的呈现
+
+压缩后的 transcript 文件中，旧消息被移除，user 看到的是：
+
+```
+# Summary of the conversation so far
+The conversation is continued from a previous session...
+
+[SM 内容：Current State / Task specification / Files and Functions / ...]
+
+If you need specific details from before compaction, read the full transcript at: <路径>
+Recent messages are preserved verbatim.
+
+--- 以下为保留的近期消息 ---
+user: ...
+assistant: ...
+```
+
+---
+
 ## /compact 命令执行优先级
 
 ```
